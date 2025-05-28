@@ -1,0 +1,782 @@
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
+const path = require('path');
+const isDev = require('electron-is-dev');
+const { spawn, exec } = require('child_process');
+const fs = require('fs-extra');
+const glob = require('fast-glob');
+const filesize = require('filesize');
+const os = require('os');
+const Store = require('electron-store');
+const sudoPrompt = require('sudo-prompt');
+
+let mainWindow;
+const store = new Store();
+const scanCache = new Map();
+
+// Security whitelist for safe deletion
+const SAFE_DELETION_PATHS = [
+  '/node_modules',
+  '/.npm',
+  '/.yarn',
+  '/.pnpm-store',
+  '/Library/Caches',
+  '/Library/Logs',
+  '/.Trash',
+  '/Downloads',
+  '/Library/Developer/Xcode/DerivedData',
+  '/Library/Developer/CoreSimulator/Devices',
+  '/__pycache__',
+  '/.venv'
+];
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1400,
+    height: 900,
+    minWidth: 1000,
+    minHeight: 700,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      enableRemoteModule: false,
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true,
+      allowRunningInsecureContent: false
+    },
+    titleBarStyle: 'hiddenInset',
+    show: false,
+    icon: path.join(__dirname, '../../assets/icon.png'),
+    vibrancy: 'under-window',
+    visualEffectState: 'active'
+  });
+
+  const startUrl = isDev 
+    ? 'http://localhost:3000' 
+    : `file://${path.join(__dirname, '../../build/index.html')}`;
+  
+  mainWindow.loadURL(startUrl);
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+  });
+
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
+  }
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+app.whenReady().then(() => {
+  createWindow();
+  createMenu();
+});
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
+
+// IPC Handlers with security validation
+ipcMain.handle('scan-system', async (event, options = {}) => {
+  try {
+    const cacheKey = JSON.stringify(options);
+    
+    // Check cache first (5 minute expiry)
+    if (scanCache.has(cacheKey)) {
+      const cached = scanCache.get(cacheKey);
+      if (Date.now() - cached.timestamp < 5 * 60 * 1000) {
+        return { success: true, data: cached.data, fromCache: true };
+      }
+    }
+    
+    const results = await scanSystem(options);
+    
+    // Cache results
+    scanCache.set(cacheKey, {
+      data: results,
+      timestamp: Date.now()
+    });
+    
+    return { success: true, data: results };
+  } catch (error) {
+    console.error('Scan error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('delete-files', async (event, filePaths, options = {}) => {
+  try {
+    // Security validation
+    if (!Array.isArray(filePaths) || filePaths.length === 0) {
+      throw new Error('Invalid file paths provided');
+    }
+    
+    // Validate all paths are safe for deletion
+    for (const filePath of filePaths) {
+      if (!isPathSafeForDeletion(filePath)) {
+        throw new Error(`Path not safe for deletion: ${filePath}`);
+      }
+    }
+    
+    // Show confirmation dialog for critical operations
+    if (options.requireConfirmation !== false) {
+      const choice = await dialog.showMessageBox(mainWindow, {
+        type: 'warning',
+        buttons: ['Cancel', 'Delete'],
+        defaultId: 0,
+        title: 'Confirm Deletion',
+        message: `Are you sure you want to delete ${filePaths.length} item(s)?`,
+        detail: 'This action cannot be undone.'
+      });
+      
+      if (choice.response === 0) {
+        return { success: false, cancelled: true };
+      }
+    }
+    
+    const result = await deleteFiles(filePaths, options);
+    
+    // Clear cache after deletion
+    scanCache.clear();
+    
+    return { success: true, data: result };
+  } catch (error) {
+    console.error('Delete error:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-file-size', async (event, filePath) => {
+  try {
+    if (!filePath || typeof filePath !== 'string') {
+      throw new Error('Invalid file path');
+    }
+    
+    const stats = await fs.stat(filePath);
+    return { success: true, size: stats.size };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('open-in-finder', async (event, filePath) => {
+  try {
+    if (!filePath || typeof filePath !== 'string') {
+      throw new Error('Invalid file path');
+    }
+    
+    shell.showItemInFolder(filePath);
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-disk-usage', async () => {
+  try {
+    const usage = await getDiskUsage();
+    return { success: true, data: usage };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('empty-trash', async () => {
+  try {
+    const result = await emptyTrash();
+    return { success: true, data: result };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-app-settings', async () => {
+  try {
+    return { success: true, data: store.store };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('save-app-settings', async (event, settings) => {
+  try {
+    Object.keys(settings).forEach(key => {
+      store.set(key, settings[key]);
+    });
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// System scanning functions with enhanced performance
+async function scanSystem(options = {}) {
+  const homeDir = os.homedir();
+  const categories = {
+    developer: {
+      name: 'Developer Files',
+      description: 'Node modules, Python environments, Xcode data, and more',
+      items: [],
+      totalSize: 0
+    },
+    cache: {
+      name: 'Cache & Temp Files', 
+      description: 'Browser caches, app caches, and temporary files',
+      items: [],
+      totalSize: 0
+    },
+    media: {
+      name: 'Media & Downloads',
+      description: 'Large media files, downloads, and screenshots',
+      items: [],
+      totalSize: 0
+    },
+    apps: {
+      name: 'App Data',
+      description: 'Application support files and user data',
+      items: [],
+      totalSize: 0
+    },
+    misc: {
+      name: 'Miscellaneous',
+      description: 'Mail data, logs, and other system files',
+      items: [],
+      totalSize: 0
+    },
+    trash: {
+      name: 'Trash',
+      description: 'Files in your trash bin',
+      items: [],
+      totalSize: 0
+    }
+  };
+
+  // Run scans in parallel for better performance
+  const scanPromises = [
+    scanDeveloperFiles(homeDir, categories.developer, options),
+    scanCacheFiles(homeDir, categories.cache, options),
+    scanMediaFiles(homeDir, categories.media, options),
+    scanAppData(homeDir, categories.apps, options),
+    scanMiscFiles(homeDir, categories.misc, options),
+    scanTrash(homeDir, categories.trash, options)
+  ];
+
+  await Promise.allSettled(scanPromises);
+
+  // Calculate total sizes
+  Object.values(categories).forEach(category => {
+    category.totalSize = category.items.reduce((sum, item) => sum + item.size, 0);
+    category.totalSizeFormatted = filesize(category.totalSize);
+  });
+
+  return categories;
+}
+
+async function scanDeveloperFiles(homeDir, category, options = {}) {
+  const minSize = options.minSize || 10 * 1024 * 1024; // 10MB
+  
+  const scanTargets = [
+    // Node.js
+    { pattern: '**/node_modules', type: 'Node.js', description: 'Node.js dependencies' },
+    { pattern: `${homeDir}/.npm`, type: 'NPM Cache', description: 'NPM package cache' },
+    { pattern: `${homeDir}/.yarn`, type: 'Yarn Cache', description: 'Yarn package cache' },
+    { pattern: `${homeDir}/.pnpm-store`, type: 'PNPM Cache', description: 'PNPM package cache' },
+    { pattern: `${homeDir}/.nvm/versions`, type: 'NVM', description: 'Node version manager files' },
+    
+    // Python
+    { pattern: '**/.venv', type: 'Python', description: 'Python virtual environments' },
+    { pattern: '**/venv', type: 'Python', description: 'Python virtual environments' },
+    { pattern: '**/__pycache__', type: 'Python', description: 'Python cache files' },
+    { pattern: `${homeDir}/anaconda3`, type: 'Anaconda', description: 'Anaconda Python distribution' },
+    { pattern: `${homeDir}/miniconda3`, type: 'Miniconda', description: 'Miniconda Python distribution' },
+    
+    // Development Tools
+    { pattern: `${homeDir}/Library/Developer/Xcode/DerivedData/*`, type: 'Xcode', description: 'Xcode build data' },
+    { pattern: `${homeDir}/Library/Developer/CoreSimulator/Devices/*`, type: 'iOS Simulator', description: 'iOS Simulator devices' },
+    { pattern: `${homeDir}/Library/Caches/com.apple.dt.Xcode`, type: 'Xcode Cache', description: 'Xcode cache files' },
+    
+    // Package Managers
+    { pattern: '/usr/local/Cellar/*', type: 'Homebrew', description: 'Homebrew packages' },
+    { pattern: '/opt/homebrew/Cellar/*', type: 'Homebrew', description: 'Homebrew packages (Apple Silicon)' },
+    { pattern: '/Library/Caches/Homebrew', type: 'Homebrew Cache', description: 'Homebrew cache' },
+    
+    // Docker
+    { pattern: `${homeDir}/Library/Containers/com.docker.docker`, type: 'Docker', description: 'Docker containers and images' },
+    
+    // IDEs
+    { pattern: `${homeDir}/.vscode/extensions`, type: 'VS Code', description: 'VS Code extensions' },
+    { pattern: `${homeDir}/Library/Application Support/Code`, type: 'VS Code', description: 'VS Code application data' },
+    { pattern: `${homeDir}/Library/Caches/JetBrains`, type: 'JetBrains', description: 'IntelliJ/PyCharm caches' }
+  ];
+
+  for (const target of scanTargets) {
+    try {
+      const matches = await glob(target.pattern, { 
+        onlyDirectories: true, 
+        absolute: true,
+        ignore: ['**/.*/**'],
+        suppressErrors: true,
+        followSymbolicLinks: false
+      });
+      
+      for (const match of matches) {
+        try {
+          const size = await getDirectorySizeFast(match);
+          if (size >= minSize) {
+            category.items.push({
+              path: match,
+              name: path.basename(match),
+              size: size,
+              sizeFormatted: filesize(size),
+              type: target.type,
+              description: target.description,
+              selected: false,
+              lastModified: await getLastModified(match),
+              canDelete: isPathSafeForDeletion(match)
+            });
+          }
+        } catch (error) {
+          // Skip files that can't be accessed
+          continue;
+        }
+      }
+    } catch (error) {
+      console.log(`Error scanning pattern ${target.pattern}:`, error.message);
+    }
+  }
+}
+
+async function scanCacheFiles(homeDir, category, options = {}) {
+  const minSize = options.minSize || 50 * 1024 * 1024; // 50MB
+  
+  const cacheTargets = [
+    // System Caches
+    { path: `${homeDir}/Library/Caches`, type: 'System Cache', description: 'System application caches' },
+    { path: '/Library/Caches', type: 'Global Cache', description: 'System-wide caches' },
+    
+    // Browser Caches
+    { path: `${homeDir}/Library/Application Support/Google/Chrome`, type: 'Chrome', description: 'Chrome browser data' },
+    { path: `${homeDir}/Library/Caches/Google/Chrome`, type: 'Chrome Cache', description: 'Chrome cache files' },
+    { path: `${homeDir}/Library/Application Support/Firefox`, type: 'Firefox', description: 'Firefox browser data' },
+    { path: `${homeDir}/Library/Safari`, type: 'Safari', description: 'Safari browser data' },
+    { path: `${homeDir}/Library/Caches/com.apple.Safari`, type: 'Safari Cache', description: 'Safari cache files' },
+    
+    // Communication Apps
+    { path: `${homeDir}/Library/Application Support/Slack`, type: 'Slack', description: 'Slack application data' },
+    { path: `${homeDir}/Library/Application Support/discord`, type: 'Discord', description: 'Discord application data' },
+    { path: `${homeDir}/Library/Application Support/Zoom`, type: 'Zoom', description: 'Zoom application data' },
+    
+    // Development Caches
+    { path: `${homeDir}/.gradle/caches`, type: 'Gradle Cache', description: 'Gradle build cache' },
+    { path: `${homeDir}/.m2/repository`, type: 'Maven Cache', description: 'Maven repository cache' },
+    
+    // Logs
+    { path: `${homeDir}/Library/Logs`, type: 'User Logs', description: 'User application logs' },
+    { path: '/Library/Logs', type: 'System Logs', description: 'System logs' }
+  ];
+
+  for (const target of cacheTargets) {
+    try {
+      if (await fs.pathExists(target.path)) {
+        const size = await getDirectorySizeFast(target.path);
+        if (size >= minSize) {
+          category.items.push({
+            path: target.path,
+            name: path.basename(target.path),
+            size: size,
+            sizeFormatted: filesize(size),
+            type: target.type,
+            description: target.description,
+            selected: false,
+            lastModified: await getLastModified(target.path),
+            canDelete: isPathSafeForDeletion(target.path)
+          });
+        }
+      }
+    } catch (error) {
+      console.log(`Error scanning cache ${target.path}:`, error.message);
+    }
+  }
+}
+
+async function scanMediaFiles(homeDir, category, options = {}) {
+  const minSize = options.minSize || 100 * 1024 * 1024; // 100MB
+  const mediaExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.mp3', '.wav', '.flac', '.jpg', '.jpeg', '.png', '.gif', '.pdf', '.zip', '.dmg', '.iso'];
+  
+  const mediaPaths = [
+    { path: `${homeDir}/Downloads`, type: 'Downloads', description: 'Downloaded files' },
+    { path: `${homeDir}/Movies`, type: 'Movies', description: 'Movie files' },
+    { path: `${homeDir}/Pictures/Screenshots`, type: 'Screenshots', description: 'Screenshot files' },
+    { path: `${homeDir}/Desktop`, type: 'Desktop', description: 'Desktop files' }
+  ];
+
+  for (const mediaPath of mediaPaths) {
+    try {
+      if (await fs.pathExists(mediaPath.path)) {
+        const files = await fs.readdir(mediaPath.path);
+        
+        for (const file of files) {
+          const filePath = path.join(mediaPath.path, file);
+          try {
+            const stats = await fs.stat(filePath);
+            const ext = path.extname(file).toLowerCase();
+            
+            if (stats.isFile() && stats.size >= minSize && mediaExtensions.includes(ext)) {
+              category.items.push({
+                path: filePath,
+                name: file,
+                size: stats.size,
+                sizeFormatted: filesize(stats.size),
+                type: mediaPath.type,
+                description: mediaPath.description,
+                selected: false,
+                lastModified: stats.mtime,
+                canDelete: true,
+                extension: ext
+              });
+            }
+          } catch (error) {
+            continue;
+          }
+        }
+      }
+    } catch (error) {
+      console.log(`Error scanning media ${mediaPath.path}:`, error.message);
+    }
+  }
+}
+
+async function scanAppData(homeDir, category, options = {}) {
+  const minSize = options.minSize || 100 * 1024 * 1024; // 100MB
+  const appDataPath = `${homeDir}/Library/Application Support`;
+  
+  try {
+    if (await fs.pathExists(appDataPath)) {
+      const apps = await fs.readdir(appDataPath);
+      
+      for (const app of apps) {
+        const appPath = path.join(appDataPath, app);
+        try {
+          const stats = await fs.stat(appPath);
+          
+          if (stats.isDirectory()) {
+            const size = await getDirectorySizeFast(appPath);
+            if (size >= minSize) {
+              category.items.push({
+                path: appPath,
+                name: app,
+                size: size,
+                sizeFormatted: filesize(size),
+                type: 'App Data',
+                description: `Application support files for ${app}`,
+                selected: false,
+                lastModified: await getLastModified(appPath),
+                canDelete: isPathSafeForDeletion(appPath)
+              });
+            }
+          }
+        } catch (error) {
+          continue;
+        }
+      }
+    }
+  } catch (error) {
+    console.log('Error scanning app data:', error.message);
+  }
+}
+
+async function scanMiscFiles(homeDir, category, options = {}) {
+  const minSize = options.minSize || 50 * 1024 * 1024; // 50MB
+  
+  const miscTargets = [
+    { path: `${homeDir}/.Trash`, type: 'Trash', description: 'Files in trash bin' },
+    { path: `${homeDir}/Library/Mail`, type: 'Mail', description: 'Mail application data' },
+    { path: `${homeDir}/Library/Containers`, type: 'Containers', description: 'App sandboxed data' },
+    { path: '/private/var/folders', type: 'Temp Files', description: 'System temporary files' },
+    { path: `${homeDir}/Library/Mobile Documents`, type: 'iCloud', description: 'iCloud Drive local cache' }
+  ];
+
+  for (const target of miscTargets) {
+    try {
+      if (await fs.pathExists(target.path)) {
+        const size = await getDirectorySizeFast(target.path);
+        if (size >= minSize) {
+          category.items.push({
+            path: target.path,
+            name: path.basename(target.path),
+            size: size,
+            sizeFormatted: filesize(size),
+            type: target.type,
+            description: target.description,
+            selected: false,
+            lastModified: await getLastModified(target.path),
+            canDelete: isPathSafeForDeletion(target.path)
+          });
+        }
+      }
+    } catch (error) {
+      console.log(`Error scanning misc ${target.path}:`, error.message);
+    }
+  }
+}
+
+async function scanTrash(homeDir, category, options = {}) {
+  const trashPath = `${homeDir}/.Trash`;
+  
+  try {
+    if (await fs.pathExists(trashPath)) {
+      const size = await getDirectorySizeFast(trashPath);
+      if (size > 0) {
+        category.items.push({
+          path: trashPath,
+          name: 'Trash',
+          size: size,
+          sizeFormatted: filesize(size),
+          type: 'Trash',
+          description: 'Files waiting to be permanently deleted',
+          selected: false,
+          lastModified: await getLastModified(trashPath),
+          canDelete: true
+        });
+      }
+    }
+  } catch (error) {
+    console.log('Error scanning trash:', error.message);
+  }
+}
+
+async function getDirectorySize(dirPath) {
+  try {
+    const stats = await fs.stat(dirPath);
+    if (stats.isFile()) {
+      return stats.size;
+    }
+    
+    let size = 0;
+    const files = await fs.readdir(dirPath);
+    
+    for (const file of files) {
+      const filePath = path.join(dirPath, file);
+      try {
+        const fileStats = await fs.stat(filePath);
+        if (fileStats.isDirectory()) {
+          size += await getDirectorySize(filePath);
+        } else {
+          size += fileStats.size;
+        }
+      } catch (error) {
+        // Skip files that can't be accessed
+        continue;
+      }
+    }
+    
+    return size;
+  } catch (error) {
+    return 0;
+  }
+}
+
+function getDeveloperFileType(filePath) {
+  if (filePath.includes('node_modules')) return 'Node.js';
+  if (filePath.includes('.venv') || filePath.includes('__pycache__')) return 'Python';
+  if (filePath.includes('Xcode')) return 'Xcode';
+  if (filePath.includes('Cellar')) return 'Homebrew';
+  if (filePath.includes('.npm')) return 'NPM Cache';
+  if (filePath.includes('.yarn')) return 'Yarn Cache';
+  return 'Developer';
+}
+
+async function getDirectorySizeFast(dirPath) {
+  try {
+    return new Promise((resolve, reject) => {
+      exec(`du -sk "${dirPath}" 2>/dev/null`, (error, stdout) => {
+        if (error) {
+          resolve(0);
+          return;
+        }
+        
+        const sizeInKB = parseInt(stdout.split('\t')[0]) || 0;
+        resolve(sizeInKB * 1024);
+      });
+    });
+  } catch (error) {
+    return 0;
+  }
+}
+
+async function getLastModified(filePath) {
+  try {
+    const stats = await fs.stat(filePath);
+    return stats.mtime;
+  } catch (error) {
+    return new Date();
+  }
+}
+
+function isPathSafeForDeletion(filePath) {
+  // Check against whitelist of safe paths
+  return SAFE_DELETION_PATHS.some(safePath => filePath.includes(safePath));
+}
+
+async function getDiskUsage() {
+  return new Promise((resolve, reject) => {
+    exec('df -h /', (error, stdout) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      
+      const lines = stdout.trim().split('\n');
+      const dataLine = lines[1].split(/\s+/);
+      
+      resolve({
+        total: dataLine[1],
+        used: dataLine[2],
+        available: dataLine[3],
+        percentage: dataLine[4]
+      });
+    });
+  });
+}
+
+async function emptyTrash() {
+  return new Promise((resolve, reject) => {
+    const options = {
+      name: 'Mac Cleanup Wizard'
+    };
+    
+    sudoPrompt.exec('rm -rf ~/.Trash/*', options, (error, stdout, stderr) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      
+      resolve({ success: true, message: 'Trash emptied successfully' });
+    });
+  });
+}
+
+// Enhanced file deletion with better error handling
+async function deleteFiles(filePaths, options = {}) {
+  const results = [];
+  const useTrash = options.moveToTrash !== false;
+  
+  for (const filePath of filePaths) {
+    try {
+      if (useTrash) {
+        // Move to trash instead of permanent deletion
+        await shell.trashItem(filePath);
+      } else {
+        await fs.remove(filePath);
+      }
+      
+      results.push({ 
+        path: filePath, 
+        success: true, 
+        method: useTrash ? 'trash' : 'delete' 
+      });
+    } catch (error) {
+      results.push({ 
+        path: filePath, 
+        success: false, 
+        error: error.message 
+      });
+    }
+  }
+  
+  return results;
+}
+
+// Create application menu
+function createMenu() {
+  const template = [
+    {
+      label: 'Mac Cleanup Wizard',
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services', submenu: [] },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideothers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    },
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'Scan System',
+          accelerator: 'Cmd+R',
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.send('trigger-scan');
+            }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Empty Trash',
+          accelerator: 'Cmd+Shift+Delete',
+          click: async () => {
+            try {
+              await emptyTrash();
+            } catch (error) {
+              console.error('Failed to empty trash:', error);
+            }
+          }
+        },
+        { type: 'separator' },
+        { role: 'close' }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectall' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'close' }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}

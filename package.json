@@ -1,0 +1,95 @@
+{
+  "name": "mac-cleanup-wizard",
+  "version": "1.0.0",
+  "description": "A free and open-source desktop app that helps you identify and safely delete unwanted files from your macOS system",
+  "main": "src/main/main.js",
+  "homepage": "./",
+  "scripts": {
+    "dev": "concurrently \"npm run electron-dev\" \"npm run react-dev\"",
+    "react-dev": "react-scripts start",
+    "electron-dev": "wait-on http://localhost:3000 && electron .",
+    "build": "npm run react-build && npm run electron-build",
+    "react-build": "react-scripts build",
+    "electron-build": "electron-builder",
+    "electron-pack": "electron-builder",
+    "dist": "npm run build && electron-builder --publish=never",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write src/**/*.js"
+  },
+  "build": {
+    "appId": "com.maccleanupwizard.app",
+    "productName": "Mac Cleanup Wizard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "build/**/*",
+      "src/main/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "date-fns": "^2.30.0",
+    "electron": "^25.0.0",
+    "electron-is-dev": "^2.0.0",
+    "electron-store": "^8.1.0",
+    "fast-glob": "^3.2.12",
+    "filesize": "^8.0.7",
+    "framer-motion": "^10.12.0",
+    "fs-extra": "^11.1.1",
+    "node-pty": "^0.10.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.9.0",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.6.2",
+    "styled-components": "^6.0.0",
+    "sudo-prompt": "^9.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "concurrently": "^8.0.1",
+    "electron-builder": "^24.0.0",
+    "eslint": "^8.42.0",
+    "prettier": "^2.8.8",
+    "typescript": "^4.9.5",
+    "wait-on": "^7.0.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
