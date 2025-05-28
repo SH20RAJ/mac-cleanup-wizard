@@ -1,16 +1,16 @@
 import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { 
-  FaCode, 
-  FaDatabase, 
-  FaImage, 
-  FaCubes, 
-  FaEllipsisH, 
-  FaTrash, 
-  FaChartPie,
-  FaSync,
-  FaShieldAlt
+import {
+    FaCode,
+    FaDatabase,
+    FaImage,
+    FaCubes,
+    FaEllipsisH,
+    FaTrash,
+    FaChartPie,
+    FaSync,
+    FaShieldAlt
 } from 'react-icons/fa';
 
 const SidebarContainer = styled.div`
@@ -123,121 +123,121 @@ const SecurityBadge = styled.div`
 `;
 
 const categories = [
-  {
-    id: 'overview',
-    name: 'Overview',
-    icon: FaChartPie
-  },
-  {
-    id: 'developer',
-    name: 'Developer Files',
-    icon: FaCode
-  },
-  {
-    id: 'cache',
-    name: 'Cache & Temp',
-    icon: FaDatabase
-  },
-  {
-    id: 'media',
-    name: 'Media & Downloads',
-    icon: FaImage
-  },
-  {
-    id: 'apps',
-    name: 'App Data',
-    icon: FaCubes
-  },
-  {
-    id: 'misc',
-    name: 'Miscellaneous',
-    icon: FaEllipsisH
-  },
-  {
-    id: 'trash',
-    name: 'Trash',
-    icon: FaTrash
-  }
+    {
+        id: 'overview',
+        name: 'Overview',
+        icon: FaChartPie
+    },
+    {
+        id: 'developer',
+        name: 'Developer Files',
+        icon: FaCode
+    },
+    {
+        id: 'cache',
+        name: 'Cache & Temp',
+        icon: FaDatabase
+    },
+    {
+        id: 'media',
+        name: 'Media & Downloads',
+        icon: FaImage
+    },
+    {
+        id: 'apps',
+        name: 'App Data',
+        icon: FaCubes
+    },
+    {
+        id: 'misc',
+        name: 'Miscellaneous',
+        icon: FaEllipsisH
+    },
+    {
+        id: 'trash',
+        name: 'Trash',
+        icon: FaTrash
+    }
 ];
 
 const Sidebar = ({ selectedCategory, onCategorySelect, cleanupData, onScan }) => {
-  const getTotalSize = (categoryData) => {
-    if (!categoryData || !categoryData.items) return 0;
-    return categoryData.items.reduce((total, item) => total + item.size, 0);
-  };
+    const getTotalSize = (categoryData) => {
+        if (!categoryData || !categoryData.items) return 0;
+        return categoryData.items.reduce((total, item) => total + item.size, 0);
+    };
 
-  const formatSize = (bytes) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
+    const formatSize = (bytes) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    };
 
-  const getTotalSystemSize = () => {
-    if (!cleanupData) return 0;
-    return Object.values(cleanupData).reduce((total, category) => {
-      return total + getTotalSize(category);
-    }, 0);
-  };
+    const getTotalSystemSize = () => {
+        if (!cleanupData) return 0;
+        return Object.values(cleanupData).reduce((total, category) => {
+            return total + getTotalSize(category);
+        }, 0);
+    };
 
-  return (
-    <SidebarContainer>
-      <Header>
-        <AppTitle>🧹 Mac Cleanup Wizard</AppTitle>
-        <AppSubtitle>Fast & Secure Cleanup</AppSubtitle>
-      </Header>
+    return (
+        <SidebarContainer>
+            <Header>
+                <AppTitle>🧹 Mac Cleanup Wizard</AppTitle>
+                <AppSubtitle>Fast & Secure Cleanup</AppSubtitle>
+            </Header>
 
-      <ScanButton
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={onScan}
-      >
-        <FaSync />
-        Scan System
-      </ScanButton>
-
-      <CategoryList>
-        {categories.map((category) => {
-          const categoryData = cleanupData?.[category.id];
-          const totalSize = category.id === 'overview' ? getTotalSystemSize() : getTotalSize(categoryData);
-          const itemCount = categoryData?.items?.length || 0;
-          
-          return (
-            <CategoryItem
-              key={category.id}
-              active={selectedCategory === category.id}
-              onClick={() => onCategorySelect(category.id)}
-              whileHover={{ x: 4 }}
-              whileTap={{ scale: 0.98 }}
+            <ScanButton
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onScan}
             >
-              <CategoryIcon active={selectedCategory === category.id}>
-                <category.icon />
-              </CategoryIcon>
-              <CategoryInfo>
-                <CategoryName active={selectedCategory === category.id}>
-                  {category.name}
-                </CategoryName>
-                <CategorySize>
-                  {category.id === 'overview' 
-                    ? `${formatSize(totalSize)} total`
-                    : `${itemCount} items • ${formatSize(totalSize)}`
-                  }
-                </CategorySize>
-              </CategoryInfo>
-            </CategoryItem>
-          );
-        })}
-      </CategoryList>
+                <FaSync />
+                Scan System
+            </ScanButton>
 
-      <Footer>
-        <SecurityBadge>
-          <FaShieldAlt />
-          Safe & Secure
-        </SecurityBadge>
-      </Footer>
-    </SidebarContainer>
-  );
+            <CategoryList>
+                {categories.map((category) => {
+                    const categoryData = cleanupData?.[category.id];
+                    const totalSize = category.id === 'overview' ? getTotalSystemSize() : getTotalSize(categoryData);
+                    const itemCount = categoryData?.items?.length || 0;
+
+                    return (
+                        <CategoryItem
+                            key={category.id}
+                            active={selectedCategory === category.id}
+                            onClick={() => onCategorySelect(category.id)}
+                            whileHover={{ x: 4 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <CategoryIcon active={selectedCategory === category.id}>
+                                <category.icon />
+                            </CategoryIcon>
+                            <CategoryInfo>
+                                <CategoryName active={selectedCategory === category.id}>
+                                    {category.name}
+                                </CategoryName>
+                                <CategorySize>
+                                    {category.id === 'overview'
+                                        ? `${formatSize(totalSize)} total`
+                                        : `${itemCount} items • ${formatSize(totalSize)}`
+                                    }
+                                </CategorySize>
+                            </CategoryInfo>
+                        </CategoryItem>
+                    );
+                })}
+            </CategoryList>
+
+            <Footer>
+                <SecurityBadge>
+                    <FaShieldAlt />
+                    Safe & Secure
+                </SecurityBadge>
+            </Footer>
+        </SidebarContainer>
+    );
 };
 
 export default Sidebar;

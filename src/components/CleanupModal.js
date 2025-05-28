@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaExclamationTriangle, 
-  FaTimes, 
-  FaTrash, 
-  FaSpinner,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaInfoCircle,
-  FaCog
+import {
+    FaExclamationTriangle,
+    FaTimes,
+    FaTrash,
+    FaSpinner,
+    FaCheckCircle,
+    FaTimesCircle,
+    FaInfoCircle,
+    FaCog
 } from 'react-icons/fa';
 
 const Overlay = styled(motion.div)`
@@ -216,130 +216,130 @@ const SpinnerIcon = styled(motion.div)`
 `;
 
 const CleanupModal = ({ isOpen, items, onConfirm, onCancel, isDeleting }) => {
-  const formatSize = (bytes) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
+    const formatSize = (bytes) => {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    };
 
-  const totalSize = items.reduce((sum, item) => sum + item.size, 0);
+    const totalSize = items.reduce((sum, item) => sum + item.size, 0);
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <Overlay
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onCancel}
-        >
-          <Modal
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Header>
-              <HeaderContent>
-                <WarningIcon>
-                  <FaExclamationTriangle />
-                </WarningIcon>
-                <HeaderText>
-                  <Title>Confirm Cleanup</Title>
-                  <Subtitle>
-                    {isDeleting ? 'Deleting files...' : 'This action cannot be undone'}
-                  </Subtitle>
-                </HeaderText>
-                {!isDeleting && (
-                  <CloseButton onClick={onCancel}>
-                    <FaTimes />
-                  </CloseButton>
-                )}
-              </HeaderContent>
-            </Header>
-
-            <Content>
-              {!isDeleting && (
-                <>
-                  <InfoText>
-                    You are about to permanently delete the selected files and folders. 
-                    This action cannot be undone. Please review the items below carefully 
-                    before proceeding.
-                  </InfoText>
-
-                  <Summary>
-                    <SummaryTitle>Cleanup Summary</SummaryTitle>
-                    <SummaryStats>
-                      <Stat>
-                        <StatValue>{items.length}</StatValue>
-                        <StatLabel>Items</StatLabel>
-                      </Stat>
-                      <Stat>
-                        <StatValue>{formatSize(totalSize)}</StatValue>
-                        <StatLabel>Total Size</StatLabel>
-                      </Stat>
-                    </SummaryStats>
-                  </Summary>
-
-                  <ItemsList>
-                    {items.slice(0, 10).map((item) => (
-                      <Item key={item.path}>
-                        <ItemName>{item.name}</ItemName>
-                        <ItemSize>{item.sizeFormatted}</ItemSize>
-                      </Item>
-                    ))}
-                    {items.length > 10 && (
-                      <Item>
-                        <ItemName style={{ fontStyle: 'italic', color: '#718096' }}>
-                          ... and {items.length - 10} more items
-                        </ItemName>
-                      </Item>
-                    )}
-                  </ItemsList>
-                </>
-              )}
-
-              {isDeleting && (
-                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                  <SpinnerIcon
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  >
-                    <FaSpinner style={{ fontSize: '32px', color: '#667eea', marginBottom: '16px' }} />
-                  </SpinnerIcon>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>
-                    Deleting files...
-                  </div>
-                  <div style={{ fontSize: '14px', color: '#718096' }}>
-                    Please wait while we clean up your selected files.
-                  </div>
-                </div>
-              )}
-            </Content>
-
-            {!isDeleting && (
-              <Actions>
-                <Button onClick={onCancel}>
-                  Cancel
-                </Button>
-                <Button 
-                  primary 
-                  onClick={onConfirm}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <Overlay
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={onCancel}
                 >
-                  <FaTrash />
-                  Delete {items.length} Items
-                </Button>
-              </Actions>
+                    <Modal
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Header>
+                            <HeaderContent>
+                                <WarningIcon>
+                                    <FaExclamationTriangle />
+                                </WarningIcon>
+                                <HeaderText>
+                                    <Title>Confirm Cleanup</Title>
+                                    <Subtitle>
+                                        {isDeleting ? 'Deleting files...' : 'This action cannot be undone'}
+                                    </Subtitle>
+                                </HeaderText>
+                                {!isDeleting && (
+                                    <CloseButton onClick={onCancel}>
+                                        <FaTimes />
+                                    </CloseButton>
+                                )}
+                            </HeaderContent>
+                        </Header>
+
+                        <Content>
+                            {!isDeleting && (
+                                <>
+                                    <InfoText>
+                                        You are about to permanently delete the selected files and folders.
+                                        This action cannot be undone. Please review the items below carefully
+                                        before proceeding.
+                                    </InfoText>
+
+                                    <Summary>
+                                        <SummaryTitle>Cleanup Summary</SummaryTitle>
+                                        <SummaryStats>
+                                            <Stat>
+                                                <StatValue>{items.length}</StatValue>
+                                                <StatLabel>Items</StatLabel>
+                                            </Stat>
+                                            <Stat>
+                                                <StatValue>{formatSize(totalSize)}</StatValue>
+                                                <StatLabel>Total Size</StatLabel>
+                                            </Stat>
+                                        </SummaryStats>
+                                    </Summary>
+
+                                    <ItemsList>
+                                        {items.slice(0, 10).map((item) => (
+                                            <Item key={item.path}>
+                                                <ItemName>{item.name}</ItemName>
+                                                <ItemSize>{item.sizeFormatted}</ItemSize>
+                                            </Item>
+                                        ))}
+                                        {items.length > 10 && (
+                                            <Item>
+                                                <ItemName style={{ fontStyle: 'italic', color: '#718096' }}>
+                                                    ... and {items.length - 10} more items
+                                                </ItemName>
+                                            </Item>
+                                        )}
+                                    </ItemsList>
+                                </>
+                            )}
+
+                            {isDeleting && (
+                                <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                                    <SpinnerIcon
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                    >
+                                        <FaSpinner style={{ fontSize: '32px', color: '#667eea', marginBottom: '16px' }} />
+                                    </SpinnerIcon>
+                                    <div style={{ fontSize: '16px', fontWeight: '600', color: '#2d3748', marginBottom: '8px' }}>
+                                        Deleting files...
+                                    </div>
+                                    <div style={{ fontSize: '14px', color: '#718096' }}>
+                                        Please wait while we clean up your selected files.
+                                    </div>
+                                </div>
+                            )}
+                        </Content>
+
+                        {!isDeleting && (
+                            <Actions>
+                                <Button onClick={onCancel}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    primary
+                                    onClick={onConfirm}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <FaTrash />
+                                    Delete {items.length} Items
+                                </Button>
+                            </Actions>
+                        )}
+                    </Modal>
+                </Overlay>
             )}
-          </Modal>
-        </Overlay>
-      )}
-    </AnimatePresence>
-  );
+        </AnimatePresence>
+    );
 };
 
 export default CleanupModal;

@@ -69,100 +69,100 @@ const ContentArea = styled.div`
 `;
 
 function App() {
-  const [selectedCategory, setSelectedCategory] = useState('overview');
-  const [isScanning, setIsScanning] = useState(false);
-  const [appSettings, setAppSettings] = useState({});
-  const { cleanupData, loading, error, refreshData, lastScanTime } = useCleanupData();
+    const [selectedCategory, setSelectedCategory] = useState('overview');
+    const [isScanning, setIsScanning] = useState(false);
+    const [appSettings, setAppSettings] = useState({});
+    const { cleanupData, loading, error, refreshData, lastScanTime } = useCleanupData();
 
-  useEffect(() => {
-    loadAppSettings();
-  }, []);
+    useEffect(() => {
+        loadAppSettings();
+    }, []);
 
-  const loadAppSettings = async () => {
-    try {
-      if (window.electronAPI) {
-        const result = await window.electronAPI.getAppSettings();
-        if (result.success) {
-          setAppSettings(result.data);
+    const loadAppSettings = async () => {
+        try {
+            if (window.electronAPI) {
+                const result = await window.electronAPI.getAppSettings();
+                if (result.success) {
+                    setAppSettings(result.data);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
         }
-      }
-    } catch (error) {
-      console.error('Failed to load settings:', error);
-    }
-  };
+    };
 
-  const saveAppSettings = async (newSettings) => {
-    try {
-      if (window.electronAPI) {
-        const result = await window.electronAPI.saveAppSettings(newSettings);
-        if (result.success) {
-          setAppSettings(prev => ({ ...prev, ...newSettings }));
+    const saveAppSettings = async (newSettings) => {
+        try {
+            if (window.electronAPI) {
+                const result = await window.electronAPI.saveAppSettings(newSettings);
+                if (result.success) {
+                    setAppSettings(prev => ({ ...prev, ...newSettings }));
+                }
+            }
+        } catch (error) {
+            console.error('Failed to save settings:', error);
         }
-      }
-    } catch (error) {
-      console.error('Failed to save settings:', error);
+    };
+
+    const handleScan = async (options = {}) => {
+        setIsScanning(true);
+        try {
+            await refreshData(options);
+        } catch (error) {
+            console.error('Scan failed:', error);
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
+    if (loading && !cleanupData) {
+        return (
+            <>
+                <GlobalStyle />
+                <LoadingScreen
+                    message="Initializing Mac Cleanup Wizard..."
+                    subtext="Please wait while we prepare the application"
+                />
+            </>
+        );
     }
-  };
 
-  const handleScan = async (options = {}) => {
-    setIsScanning(true);
-    try {
-      await refreshData(options);
-    } catch (error) {
-      console.error('Scan failed:', error);
-    } finally {
-      setIsScanning(false);
+    if (isScanning) {
+        return (
+            <>
+                <GlobalStyle />
+                <LoadingScreen
+                    message="Scanning your Mac..."
+                    subtext="Analyzing files and directories for cleanup opportunities"
+                />
+            </>
+        );
     }
-  };
 
-  if (loading && !cleanupData) {
     return (
-      <>
-        <GlobalStyle />
-        <LoadingScreen 
-          message="Initializing Mac Cleanup Wizard..." 
-          subtext="Please wait while we prepare the application"
-        />
-      </>
+        <>
+            <GlobalStyle />
+            <AppContainer>
+                <ContentArea>
+                    <Sidebar
+                        selectedCategory={selectedCategory}
+                        onCategorySelect={setSelectedCategory}
+                        cleanupData={cleanupData}
+                        onScan={handleScan}
+                        lastScanTime={lastScanTime}
+                        settings={appSettings}
+                        onSettingsChange={saveAppSettings}
+                    />
+                    <MainContent
+                        selectedCategory={selectedCategory}
+                        cleanupData={cleanupData}
+                        onRefresh={refreshData}
+                        onCategorySelect={setSelectedCategory}
+                    />
+                </ContentArea>
+            </AppContainer>
+        </>
     );
-  }
-
-  if (isScanning) {
-    return (
-      <>
-        <GlobalStyle />
-        <LoadingScreen 
-          message="Scanning your Mac..." 
-          subtext="Analyzing files and directories for cleanup opportunities"
-        />
-      </>
-    );
-  }
-
-  return (
-    <>
-      <GlobalStyle />
-      <AppContainer>
-        <ContentArea>
-          <Sidebar 
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
-            cleanupData={cleanupData}
-            onScan={handleScan}
-            lastScanTime={lastScanTime}
-            settings={appSettings}
-            onSettingsChange={saveAppSettings}
-          />
-          <MainContent 
-            selectedCategory={selectedCategory}
-            cleanupData={cleanupData}
-            onRefresh={refreshData}
-            onCategorySelect={setSelectedCategory}
-          />
-        </ContentArea>
-      </AppContainer>
-    </>
-  );
 }
 
 export default App;

@@ -41,25 +41,25 @@ const LoadingSubtext = styled(motion.p)`
 `;
 
 const LoadingScreen = ({ message = "Loading...", subtext = "Please wait while we analyze your system" }) => {
-  return (
-    <LoadingContainer>
-      <LoadingSpinner />
-      <LoadingText
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        {message}
-      </LoadingText>
-      <LoadingSubtext
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        {subtext}
-      </LoadingSubtext>
-    </LoadingContainer>
-  );
+    return (
+        <LoadingContainer>
+            <LoadingSpinner />
+            <LoadingText
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+            >
+                {message}
+            </LoadingText>
+            <LoadingSubtext
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+            >
+                {subtext}
+            </LoadingSubtext>
+        </LoadingContainer>
+    );
 };
 
 export default LoadingScreen;

@@ -1,19 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaFolder, 
-  FaFile, 
-  FaCheck, 
-  FaEye, 
-  FaExternalLinkAlt,
-  FaSort,
-  FaSearch,
-  FaFilter,
-  FaList,
-  FaTh,
-  FaCalendarAlt,
-  FaWeight
+import {
+    FaFolder,
+    FaFile,
+    FaCheck,
+    FaEye,
+    FaExternalLinkAlt,
+    FaSort,
+    FaSearch,
+    FaFilter,
+    FaList,
+    FaTh,
+    FaCalendarAlt,
+    FaWeight
 } from 'react-icons/fa';
 
 const CategoryContainer = styled(motion.div)`
@@ -237,152 +237,152 @@ const EmptyText = styled.p`
 `;
 
 const CategoryPanel = ({ category, data, selectedItems, onItemSelect, onSelectAll }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('size'); // 'size', 'name', 'type'
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState('size'); // 'size', 'name', 'type'
 
-  if (!data || !data.items || data.items.length === 0) {
-    return (
-      <CategoryContainer
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-      >
-        <EmptyState>
-          <EmptyIcon>
-            <FaFolder />
-          </EmptyIcon>
-          <EmptyTitle>No items found</EmptyTitle>
-          <EmptyText>
-            Great! This category doesn't have any items that need cleanup.
-            <br />
-            Try scanning again or check other categories.
-          </EmptyText>
-        </EmptyState>
-      </CategoryContainer>
-    );
-  }
-
-  const filteredItems = data.items.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.path.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    switch (sortBy) {
-      case 'size':
-        return b.size - a.size;
-      case 'name':
-        return a.name.localeCompare(b.name);
-      case 'type':
-        return a.type.localeCompare(b.type);
-      default:
-        return 0;
-    }
-  });
-
-  const handleItemClick = (item) => {
-    const isSelected = selectedItems.some(selected => selected.path === item.path);
-    onItemSelect(item, !isSelected);
-  };
-
-  const handleSelectAll = () => {
-    onSelectAll(category);
-  };
-
-  const handleOpenInFinder = (item) => {
-    if (window.electronAPI) {
-      window.electronAPI.openInFinder(item.path);
-    }
-  };
-
-  const allSelected = sortedItems.length > 0 && sortedItems.every(item =>
-    selectedItems.some(selected => selected.path === item.path)
-  );
-
-  return (
-    <CategoryContainer
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-    >
-      <ControlsBar>
-        <SearchBox>
-          <SearchInput
-            type="text"
-            placeholder="Search files..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <SearchIcon>
-            <FaSearch />
-          </SearchIcon>
-        </SearchBox>
-
-        <Controls>
-          <SortButton onClick={() => setSortBy(sortBy === 'size' ? 'name' : 'size')}>
-            <FaSort />
-            Sort by {sortBy === 'size' ? 'Name' : 'Size'}
-          </SortButton>
-
-          <SelectAllButton
-            onClick={handleSelectAll}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {allSelected ? 'Deselect All' : 'Select All'}
-          </SelectAllButton>
-        </Controls>
-      </ControlsBar>
-
-      <ItemsList>
-        {sortedItems.map((item, index) => {
-          const isSelected = selectedItems.some(selected => selected.path === item.path);
-          
-          return (
-            <ItemCard
-              key={item.path}
-              selected={isSelected}
-              onClick={() => handleItemClick(item)}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+    if (!data || !data.items || data.items.length === 0) {
+        return (
+            <CategoryContainer
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
             >
-              <CheckboxWrapper>
-                <Checkbox checked={isSelected}>
-                  {isSelected && <CheckIcon />}
-                </Checkbox>
-              </CheckboxWrapper>
+                <EmptyState>
+                    <EmptyIcon>
+                        <FaFolder />
+                    </EmptyIcon>
+                    <EmptyTitle>No items found</EmptyTitle>
+                    <EmptyText>
+                        Great! This category doesn't have any items that need cleanup.
+                        <br />
+                        Try scanning again or check other categories.
+                    </EmptyText>
+                </EmptyState>
+            </CategoryContainer>
+        );
+    }
 
-              <ItemHeader>
-                <ItemIcon>
-                  <FaFolder />
-                </ItemIcon>
-                <ItemInfo>
-                  <ItemName>{item.name}</ItemName>
-                  <ItemPath>{item.path}</ItemPath>
-                </ItemInfo>
-                <ItemActions onClick={(e) => e.stopPropagation()}>
-                  <ActionButton
-                    onClick={() => handleOpenInFinder(item)}
-                    title="Open in Finder"
-                  >
-                    <FaExternalLinkAlt />
-                  </ActionButton>
-                </ItemActions>
-              </ItemHeader>
+    const filteredItems = data.items.filter(item =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.path.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-              <ItemStats>
-                <ItemSize>{item.sizeFormatted}</ItemSize>
-                <ItemType>{item.type}</ItemType>
-              </ItemStats>
-            </ItemCard>
-          );
-        })}
-      </ItemsList>
-    </CategoryContainer>
-  );
+    const sortedItems = [...filteredItems].sort((a, b) => {
+        switch (sortBy) {
+            case 'size':
+                return b.size - a.size;
+            case 'name':
+                return a.name.localeCompare(b.name);
+            case 'type':
+                return a.type.localeCompare(b.type);
+            default:
+                return 0;
+        }
+    });
+
+    const handleItemClick = (item) => {
+        const isSelected = selectedItems.some(selected => selected.path === item.path);
+        onItemSelect(item, !isSelected);
+    };
+
+    const handleSelectAll = () => {
+        onSelectAll(category);
+    };
+
+    const handleOpenInFinder = (item) => {
+        if (window.electronAPI) {
+            window.electronAPI.openInFinder(item.path);
+        }
+    };
+
+    const allSelected = sortedItems.length > 0 && sortedItems.every(item =>
+        selectedItems.some(selected => selected.path === item.path)
+    );
+
+    return (
+        <CategoryContainer
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+        >
+            <ControlsBar>
+                <SearchBox>
+                    <SearchInput
+                        type="text"
+                        placeholder="Search files..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <SearchIcon>
+                        <FaSearch />
+                    </SearchIcon>
+                </SearchBox>
+
+                <Controls>
+                    <SortButton onClick={() => setSortBy(sortBy === 'size' ? 'name' : 'size')}>
+                        <FaSort />
+                        Sort by {sortBy === 'size' ? 'Name' : 'Size'}
+                    </SortButton>
+
+                    <SelectAllButton
+                        onClick={handleSelectAll}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        {allSelected ? 'Deselect All' : 'Select All'}
+                    </SelectAllButton>
+                </Controls>
+            </ControlsBar>
+
+            <ItemsList>
+                {sortedItems.map((item, index) => {
+                    const isSelected = selectedItems.some(selected => selected.path === item.path);
+
+                    return (
+                        <ItemCard
+                            key={item.path}
+                            selected={isSelected}
+                            onClick={() => handleItemClick(item)}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                        >
+                            <CheckboxWrapper>
+                                <Checkbox checked={isSelected}>
+                                    {isSelected && <CheckIcon />}
+                                </Checkbox>
+                            </CheckboxWrapper>
+
+                            <ItemHeader>
+                                <ItemIcon>
+                                    <FaFolder />
+                                </ItemIcon>
+                                <ItemInfo>
+                                    <ItemName>{item.name}</ItemName>
+                                    <ItemPath>{item.path}</ItemPath>
+                                </ItemInfo>
+                                <ItemActions onClick={(e) => e.stopPropagation()}>
+                                    <ActionButton
+                                        onClick={() => handleOpenInFinder(item)}
+                                        title="Open in Finder"
+                                    >
+                                        <FaExternalLinkAlt />
+                                    </ActionButton>
+                                </ItemActions>
+                            </ItemHeader>
+
+                            <ItemStats>
+                                <ItemSize>{item.sizeFormatted}</ItemSize>
+                                <ItemType>{item.type}</ItemType>
+                            </ItemStats>
+                        </ItemCard>
+                    );
+                })}
+            </ItemsList>
+        </CategoryContainer>
+    );
 };
 
 export default CategoryPanel;
