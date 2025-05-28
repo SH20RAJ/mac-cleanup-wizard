@@ -86,22 +86,6 @@ npm run build
 
 ---
 
-## 🧠 Suggested AI Prompt for IDE
-
-> "Build a desktop app using Electron.js and React.js that scans macOS file system for known space-hog folders like node\_modules, Xcode caches, and app data. Organize the results into categories like Developer, Media, Cache, and Misc. Let users preview and delete files/folders with confirmation. Use Node.js to handle filesystem and permission checks. Add optional GPT-based assistant to suggest deletions safely."
-
----
-
-## 📚 Roadmap
-
-* [ ] Add dark mode UI
-* [ ] Add support for Windows & Linux
-* [ ] Add scheduling/auto-clean option
-* [ ] Integration with AI cleanup assistant
-* [ ] Create cleanup scripts for CLI version
-
----
-
 ## 🙌 Contributing
 
 We welcome contributions! See `CONTRIBUTING.md` for setup instructions and guidelines.

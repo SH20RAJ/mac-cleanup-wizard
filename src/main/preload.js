@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Settings and preferences
     getAppSettings: () => ipcRenderer.invoke('get-app-settings'),
     saveAppSettings: (settings) => ipcRenderer.invoke('save-app-settings', settings),
+    getSettingWithDefault: (key, defaultValue) => ipcRenderer.invoke('get-settings-with-default', key, defaultValue),
+    resetAppSettings: () => ipcRenderer.invoke('reset-app-settings'),
 
     // App info
     getAppVersion: () => process.env.npm_package_version || '1.0.0',
@@ -21,5 +23,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // File operations
     showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),
-    showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options)
+    showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
+
+    // Event listeners
+    onThemeChanged: (callback) => ipcRenderer.on('theme-changed', (_, theme) => callback(theme)),
+    onStartupScan: (callback) => ipcRenderer.on('trigger-startup-scan', () => callback()),
+    removeAllListeners: () => {
+        ipcRenderer.removeAllListeners('theme-changed');
+        ipcRenderer.removeAllListeners('trigger-startup-scan');
+    }
 });

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu, nativeTheme } = require('electron');
 const path = require('path');
 const isDev = require('electron-is-dev');
 const { spawn, exec } = require('child_process');
@@ -10,15 +10,83 @@ const sudoPrompt = require('sudo-prompt');
 
 // Custom file size formatter to avoid dependency issues
 function formatFileSize(bytes) {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// Default app settings
+const defaultSettings = {
+    appearance: {
+        theme: 'auto', // 'light', 'dark', or 'auto'
+        accentColor: '#667eea',
+        showAnimations: true
+    },
+    scan: {
+        includeHiddenFiles: false,
+        minimumFileSize: 1024 * 1024, // 1MB
+        notificationOnComplete: true,
+        scanOnStartup: false
+    },
+    cleanup: {
+        confirmBeforeDelete: true,
+        moveToTrashFirst: true,
+        showDeleteWarnings: true,
+        skipSystemFiles: true
+    },
+    general: {
+        startMinimized: false,
+        checkForUpdatesAutomatically: true,
+        analyticsEnabled: false,
+        lastScanDate: null
+    }
+};
+
+// Initialize settings store with schema validation
+const store = new Store({
+    defaults: defaultSettings,
+    schema: {
+        appearance: {
+            type: 'object',
+            properties: {
+                theme: { type: 'string', enum: ['light', 'dark', 'auto'] },
+                accentColor: { type: 'string' },
+                showAnimations: { type: 'boolean' }
+            }
+        },
+        scan: {
+            type: 'object',
+            properties: {
+                includeHiddenFiles: { type: 'boolean' },
+                minimumFileSize: { type: 'number' },
+                notificationOnComplete: { type: 'boolean' },
+                scanOnStartup: { type: 'boolean' }
+            }
+        },
+        cleanup: {
+            type: 'object',
+            properties: {
+                confirmBeforeDelete: { type: 'boolean' },
+                moveToTrashFirst: { type: 'boolean' },
+                showDeleteWarnings: { type: 'boolean' },
+                skipSystemFiles: { type: 'boolean' }
+            }
+        },
+        general: {
+            type: 'object',
+            properties: {
+                startMinimized: { type: 'boolean' },
+                checkForUpdatesAutomatically: { type: 'boolean' },
+                analyticsEnabled: { type: 'boolean' },
+                lastScanDate: { type: ['string', 'null'] }
+            }
+        }
+    }
+});
+
 let mainWindow;
-const store = new Store();
 const scanCache = new Map();
 
 // Security whitelist for safe deletion
@@ -38,6 +106,12 @@ const SAFE_DELETION_PATHS = [
 ];
 
 function createWindow() {
+    // Check if we should start minimized based on settings
+    const startMinimized = store.get('general.startMinimized', false);
+
+    // Get user's theme preference
+    const themePreference = store.get('appearance.theme', 'auto');
+
     mainWindow = new BrowserWindow({
         width: 1400,
         height: 900,
@@ -52,8 +126,8 @@ function createWindow() {
             allowRunningInsecureContent: false
         },
         titleBarStyle: 'hiddenInset',
-        show: false,
-        icon: path.join(__dirname, '../../assets/icon.png'),
+        show: !startMinimized,
+        icon: path.join(__dirname, '../../assets/icon.icns'),
         vibrancy: 'under-window',
         visualEffectState: 'active'
     });
@@ -65,7 +139,17 @@ function createWindow() {
     mainWindow.loadURL(startUrl);
 
     mainWindow.once('ready-to-show', () => {
-        mainWindow.show();
+        if (!startMinimized) {
+            mainWindow.show();
+        }
+
+        // Apply theme immediately after window is ready
+        applyTheme(themePreference);
+
+        // Run startup scan if enabled in settings
+        if (store.get('scan.scanOnStartup', false)) {
+            mainWindow.webContents.send('trigger-startup-scan');
+        }
     });
 
     if (isDev) {
@@ -212,20 +296,78 @@ ipcMain.handle('get-app-settings', async () => {
     try {
         return { success: true, data: store.store };
     } catch (error) {
+        console.error('Failed to get app settings:', error);
         return { success: false, error: error.message };
     }
 });
 
 ipcMain.handle('save-app-settings', async (event, settings) => {
     try {
-        Object.keys(settings).forEach(key => {
-            store.set(key, settings[key]);
-        });
-        return { success: true };
+        // Handle nested settings objects
+        const mergeSettings = (target, source) => {
+            for (const key in source) {
+                if (source[key] !== null && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                    // Get current value or create empty object if it doesn't exist
+                    const currentValue = store.get(key) || {};
+                    // Recursively merge
+                    store.set(key, mergeSettings(currentValue, source[key]));
+                } else {
+                    // Directly set value
+                    store.set(key, source[key]);
+                }
+            }
+            return store.get(key);
+        };
+
+        mergeSettings(store.store, settings);
+
+        // Apply theme changes immediately if needed
+        if (settings.appearance && settings.appearance.theme && mainWindow) {
+            applyTheme(settings.appearance.theme);
+        }
+
+        return { success: true, data: store.store };
     } catch (error) {
+        console.error('Failed to save app settings:', error);
         return { success: false, error: error.message };
     }
 });
+
+// Helper function to get settings with defaults
+ipcMain.handle('get-settings-with-default', async (event, key, defaultValue) => {
+    try {
+        const value = store.get(key, defaultValue);
+        return { success: true, data: value };
+    } catch (error) {
+        console.error(`Failed to get setting ${key}:`, error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Reset settings to defaults
+ipcMain.handle('reset-app-settings', async () => {
+    try {
+        store.clear();
+        store.store = JSON.parse(JSON.stringify(defaultSettings)); // Deep clone defaults
+        return { success: true, data: store.store };
+    } catch (error) {
+        console.error('Failed to reset app settings:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Apply theme based on settings
+function applyTheme(theme) {
+    if (!mainWindow) return;
+
+    if (theme === 'auto') {
+        // Use system preference
+        const isDarkMode = nativeTheme.shouldUseDarkColors;
+        mainWindow.webContents.send('theme-changed', isDarkMode ? 'dark' : 'light');
+    } else {
+        mainWindow.webContents.send('theme-changed', theme);
+    }
+}
 
 // System scanning functions with enhanced performance
 async function scanSystem(options = {}) {

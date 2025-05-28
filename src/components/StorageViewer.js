@@ -3,6 +3,15 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FaHdd, FaApple, FaFolder, FaCloud, FaExclamationTriangle } from 'react-icons/fa';
 
+const parseSize = (sizeStr) => {
+  if (!sizeStr) return 0;
+  const number = parseFloat(sizeStr);
+  const unit = sizeStr.replace(/[0-9.]/g, '').trim().toUpperCase();
+  const k = 1024;
+  const units = { 'B': 1, 'K': k, 'KB': k, 'M': k * k, 'MB': k * k, 'G': k * k * k, 'GB': k * k * k, 'T': k * k * k * k, 'TB': k * k * k * k };
+  return number * (units[unit] || 1);
+};
+
 const StorageContainer = styled(motion.div)`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 20px;
@@ -194,7 +203,7 @@ const StorageViewer = ({ cleanupData }) => {
         setLoading(false);
       }
     };
-    
+
     loadDiskUsage();
   }, []);
 
@@ -208,7 +217,7 @@ const StorageViewer = ({ cleanupData }) => {
 
   const parseSize = (sizeStr) => {
     if (!sizeStr) return 0;
-    const units = { 'B': 1, 'K': 1024, 'M': 1024*1024, 'G': 1024*1024*1024, 'T': 1024*1024*1024*1024 };
+    const units = { 'B': 1, 'K': 1024, 'M': 1024 * 1024, 'G': 1024 * 1024 * 1024, 'T': 1024 * 1024 * 1024 * 1024 };
     const match = sizeStr.match(/^([\d.]+)([BKMGT])/);
     if (match) {
       return parseFloat(match[1]) * (units[match[2]] || 1);
@@ -225,7 +234,7 @@ const StorageViewer = ({ cleanupData }) => {
 
   const getCategoryData = () => {
     if (!cleanupData) return [];
-    
+
     const categories = [
       { id: 'developer', name: 'Developer Files', icon: '💻', color: '#667eea' },
       { id: 'cache', name: 'Cache & Temp', icon: '🗄️', color: '#f093fb' },
@@ -245,7 +254,7 @@ const StorageViewer = ({ cleanupData }) => {
 
   const getStorageSegments = () => {
     if (!diskUsage) return [];
-    
+
     const totalBytes = parseSize(diskUsage.total);
     const usedBytes = parseSize(diskUsage.used);
     const cleanableBytes = getTotalCleanableSize();
@@ -253,21 +262,21 @@ const StorageViewer = ({ cleanupData }) => {
     const freeBytes = totalBytes - usedBytes;
 
     return [
-      { 
-        name: 'System & Apps', 
-        size: systemBytes, 
+      {
+        name: 'System & Apps',
+        size: systemBytes,
         percentage: (systemBytes / totalBytes) * 100,
         color: '#4facfe'
       },
-      { 
-        name: 'Cleanable Files', 
-        size: cleanableBytes, 
+      {
+        name: 'Cleanable Files',
+        size: cleanableBytes,
         percentage: (cleanableBytes / totalBytes) * 100,
         color: '#ff9a9e'
       },
-      { 
-        name: 'Free Space', 
-        size: freeBytes, 
+      {
+        name: 'Free Space',
+        size: freeBytes,
         percentage: (freeBytes / totalBytes) * 100,
         color: '#43e97b'
       }
@@ -315,7 +324,7 @@ const StorageViewer = ({ cleanupData }) => {
         {segments.map((segment, index) => (
           <StorageSegment
             key={segment.name}
-            style={{ 
+            style={{
               width: `${segment.percentage}%`,
               background: segment.color
             }}

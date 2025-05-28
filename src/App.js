@@ -76,6 +76,33 @@ function App() {
 
     useEffect(() => {
         loadAppSettings();
+
+        // Set up theme change listener
+        if (window.electronAPI && window.electronAPI.onThemeChanged) {
+            window.electronAPI.onThemeChanged((theme) => {
+                setAppSettings(prev => ({
+                    ...prev,
+                    appearance: {
+                        ...(prev.appearance || {}),
+                        theme
+                    }
+                }));
+            });
+        }
+
+        // Set up startup scan listener
+        if (window.electronAPI && window.electronAPI.onStartupScan) {
+            window.electronAPI.onStartupScan(() => {
+                handleScan();
+            });
+        }
+
+        // Cleanup listeners when component unmounts
+        return () => {
+            if (window.electronAPI && window.electronAPI.removeAllListeners) {
+                window.electronAPI.removeAllListeners();
+            }
+        };
     }, []);
 
     const loadAppSettings = async () => {

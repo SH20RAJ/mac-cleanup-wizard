@@ -10,7 +10,8 @@ import {
     FaTrash,
     FaChartPie,
     FaSync,
-    FaShieldAlt
+    FaShieldAlt,
+    FaCog
 } from 'react-icons/fa';
 
 const SidebarContainer = styled.div`
@@ -157,6 +158,11 @@ const categories = [
         id: 'trash',
         name: 'Trash',
         icon: FaTrash
+    },
+    {
+        id: 'settings',
+        name: 'Settings',
+        icon: FaCog
     }
 ];
 
@@ -199,7 +205,8 @@ const Sidebar = ({ selectedCategory, onCategorySelect, cleanupData, onScan }) =>
 
             <CategoryList>
                 {categories.map((category) => {
-                    const categoryData = cleanupData?.[category.id];
+                    const isSettings = category.id === 'settings';
+                    const categoryData = !isSettings ? cleanupData?.[category.id] : null;
                     const totalSize = category.id === 'overview' ? getTotalSystemSize() : getTotalSize(categoryData);
                     const itemCount = categoryData?.items?.length || 0;
 
@@ -219,9 +226,11 @@ const Sidebar = ({ selectedCategory, onCategorySelect, cleanupData, onScan }) =>
                                     {category.name}
                                 </CategoryName>
                                 <CategorySize>
-                                    {category.id === 'overview'
-                                        ? `${formatSize(totalSize)} total`
-                                        : `${itemCount} items • ${formatSize(totalSize)}`
+                                    {isSettings
+                                        ? "App preferences"
+                                        : category.id === 'overview'
+                                            ? `${formatSize(totalSize)} total`
+                                            : `${itemCount} items • ${formatSize(totalSize)}`
                                     }
                                 </CategorySize>
                             </CategoryInfo>
