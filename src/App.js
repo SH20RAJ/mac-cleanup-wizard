@@ -142,7 +142,20 @@ function App() {
         }
     };
 
-    if (loading && !cleanupData) {
+    // Add a timeout for initial loading
+    const [initialLoadTimeout, setInitialLoadTimeout] = useState(false);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (loading && !cleanupData) {
+                setInitialLoadTimeout(true);
+            }
+        }, 15000); // 15 seconds timeout
+
+        return () => clearTimeout(timer);
+    }, [loading, cleanupData]);
+
+    if (loading && !cleanupData && !initialLoadTimeout) {
         return (
             <>
                 <GlobalStyle />
@@ -152,6 +165,12 @@ function App() {
                 />
             </>
         );
+    }
+
+    // If loading times out, proceed with mock data
+    if (loading && !cleanupData && initialLoadTimeout) {
+        console.warn("Loading timed out, proceeding with mock data");
+        // Continue rendering the app interface
     }
 
     if (isScanning) {

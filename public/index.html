@@ -31,6 +31,24 @@
 <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <!-- Error handling for renderer process -->
+    <script>
+        window.addEventListener('error', function (event) {
+            console.error('Runtime error caught:', event.error);
+            // Only show alert for critical errors, not for normal operation
+            if (event.error && event.error.message &&
+                (event.error.message.includes('permission') ||
+                    event.error.message.includes('access denied') ||
+                    event.error.message.includes('failed to load'))) {
+                alert('Error: ' + event.error.message + '\nThe application will continue with limited functionality.');
+            }
+        });
+
+        // Handle promise rejections
+        window.addEventListener('unhandledrejection', function (event) {
+            console.error('Unhandled promise rejection:', event.reason);
+        });
+    </script>
 </body>
 
 </html>

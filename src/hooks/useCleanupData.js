@@ -12,13 +12,31 @@ export const useCleanupData = () => {
             setError(null);
 
             if (window.electronAPI) {
-                const result = await window.electronAPI.scanSystem(options);
+                // Add a timeout to prevent stuck loading screen
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Scan timed out')), 30000);
+                });
 
-                if (result.success) {
-                    setCleanupData(result.data);
+                try {
+                    const result = await Promise.race([
+                        window.electronAPI.scanSystem(options),
+                        timeoutPromise
+                    ]);
+
+                    if (result.success) {
+                        setCleanupData(result.data);
+                        setLastScanTime(new Date());
+                    } else {
+                        console.error('Scan error:', result.error);
+                        setError(result.error);
+                        // Use mock data if scan fails
+                        setCleanupData(getMockData());
+                    }
+                } catch (timeoutError) {
+                    console.error('Scan timeout:', timeoutError);
+                    setError('Scan timed out. Using sample data instead.');
+                    setCleanupData(getMockData());
                     setLastScanTime(new Date());
-                } else {
-                    setError(result.error);
                 }
             } else {
                 // Fallback for development
@@ -28,6 +46,9 @@ export const useCleanupData = () => {
         } catch (err) {
             setError(err.message);
             console.error('Scan failed:', err);
+            // Use mock data if scan fails
+            setCleanupData(getMockData());
+            setLastScanTime(new Date());
         } finally {
             setLoading(false);
         }

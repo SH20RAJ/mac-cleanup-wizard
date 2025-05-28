@@ -74,8 +74,8 @@ const CategoryItem = styled(motion.div)`
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: ${props => props.active ? 'rgba(255, 255, 255, 0.2)' : 'transparent'};
-  border: 2px solid ${props => props.active ? 'rgba(255, 255, 255, 0.3)' : 'transparent'};
+  background: ${props => props.$active ? 'rgba(255, 255, 255, 0.2)' : 'transparent'};
+  border: 2px solid ${props => props.$active ? 'rgba(255, 255, 255, 0.3)' : 'transparent'};
 
   &:hover {
     background: rgba(255, 255, 255, 0.15);
@@ -86,7 +86,7 @@ const CategoryIcon = styled.div`
   font-size: 18px;
   color: white;
   margin-right: 12px;
-  opacity: ${props => props.active ? 1 : 0.8};
+  opacity: ${props => props.$active ? 1 : 0.8};
 `;
 
 const CategoryInfo = styled.div`
@@ -97,7 +97,7 @@ const CategoryName = styled.div`
   color: white;
   font-weight: 600;
   font-size: 14px;
-  opacity: ${props => props.active ? 1 : 0.9};
+  opacity: ${props => props.$active ? 1 : 0.9};
 `;
 
 const CategorySize = styled.div`
@@ -213,16 +213,16 @@ const Sidebar = ({ selectedCategory, onCategorySelect, cleanupData, onScan }) =>
                     return (
                         <CategoryItem
                             key={category.id}
-                            active={selectedCategory === category.id}
+                            $active={selectedCategory === category.id}
                             onClick={() => onCategorySelect(category.id)}
                             whileHover={{ x: 4 }}
                             whileTap={{ scale: 0.98 }}
                         >
-                            <CategoryIcon active={selectedCategory === category.id}>
+                            <CategoryIcon $active={selectedCategory === category.id}>
                                 <category.icon />
                             </CategoryIcon>
                             <CategoryInfo>
-                                <CategoryName active={selectedCategory === category.id}>
+                                <CategoryName $active={selectedCategory === category.id}>
                                     {category.name}
                                 </CategoryName>
                                 <CategorySize>

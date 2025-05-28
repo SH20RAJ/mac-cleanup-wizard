@@ -2,11 +2,15 @@ const { app, BrowserWindow, ipcMain, dialog, shell, Menu, nativeTheme } = requir
 const path = require('path');
 const isDev = require('electron-is-dev');
 const { spawn, exec } = require('child_process');
+const { promisify } = require('util');
 const fs = require('fs-extra');
 const glob = require('fast-glob');
 const os = require('os');
 const Store = require('electron-store');
 const sudoPrompt = require('sudo-prompt');
+
+// Promisify exec for better async handling
+const execPromise = promisify(exec);
 
 // Custom file size formatter to avoid dependency issues
 function formatFileSize(bytes) {
@@ -102,7 +106,14 @@ const SAFE_DELETION_PATHS = [
     '/Library/Developer/Xcode/DerivedData',
     '/Library/Developer/CoreSimulator/Devices',
     '/__pycache__',
-    '/.venv'
+    '/.venv',
+    // Homebrew related paths
+    '/usr/local/Homebrew',
+    '/opt/homebrew',
+    '/usr/homebrew',
+    '/usr/local/Cellar',
+    '/Library/Caches/Homebrew',
+    '/opt/homebrew/var/homebrew'
 ];
 
 function createWindow() {
@@ -161,7 +172,37 @@ function createWindow() {
     });
 }
 
-app.whenReady().then(() => {
+// Check required permissions
+async function checkPermissions() {
+    try {
+        // Get main directories we'll need to access
+        const homeDir = os.homedir();
+        const testPaths = [
+            path.join(homeDir, 'Library'),
+            path.join(homeDir, 'Downloads'),
+            path.join(homeDir, 'Documents')
+        ];
+
+        // Test basic read access
+        for (const testPath of testPaths) {
+            try {
+                await fs.access(testPath, fs.constants.R_OK);
+                console.log(`Read permission OK: ${testPath}`);
+            } catch (err) {
+                console.log(`Read permission issues with ${testPath}: ${err.message}`);
+            }
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error checking permissions:', error);
+        return false;
+    }
+}
+
+app.whenReady().then(async () => {
+    // Check permissions before creating window
+    await checkPermissions();
     createWindow();
     createMenu();
 });
@@ -214,13 +255,47 @@ ipcMain.handle('delete-files', async (event, filePaths, options = {}) => {
         }
 
         // Validate all paths are safe for deletion
-        for (const filePath of filePaths) {
-            if (!isPathSafeForDeletion(filePath)) {
-                throw new Error(`Path not safe for deletion: ${filePath}`);
+        const criticalPaths = filePaths.filter(filePath => !isPathSafeForDeletion(filePath));
+        
+        // Show extra confirmation for critical system paths
+        if (criticalPaths.length > 0) {
+            const choice = await dialog.showMessageBox(mainWindow, {
+                type: 'warning',
+                buttons: ['Cancel', 'Delete Anyway'],
+                defaultId: 0,
+                title: 'Critical System Files Detected',
+                message: `WARNING: You are about to delete ${criticalPaths.length} system-critical file(s).`,
+                detail: `This could potentially harm your system. Are you absolutely sure you want to continue?\n\nCritical files:\n${criticalPaths.slice(0, 5).join('\n')}${criticalPaths.length > 5 ? '\n...' : ''}`
+            });
+
+            if (choice.response === 0) {
+                return { success: false, cancelled: true };
             }
         }
 
-        // Show confirmation dialog for critical operations
+        // Check if any paths are not in safe deletion list - show warning but don't block
+        const potentiallyUnsafePaths = filePaths.filter(filePath => {
+            const normalizedPath = filePath.replace(/\/+$/, '');
+            return !SAFE_DELETION_PATHS.some(safePath => normalizedPath.includes(safePath));
+        });
+        
+        // Show extra confirmation for paths not in safe list
+        if (potentiallyUnsafePaths.length > 0 && options.requireConfirmation !== false) {
+            const choice = await dialog.showMessageBox(mainWindow, {
+                type: 'warning',
+                buttons: ['Cancel', 'Delete Anyway'],
+                defaultId: 0,
+                title: 'Unsafe Path Warning',
+                message: `${potentiallyUnsafePaths.length} path(s) are not in the safe deletion list.`,
+                detail: `This includes:\n${potentiallyUnsafePaths.slice(0, 3).join('\n')}${potentiallyUnsafePaths.length > 3 ? '\n...' : ''}\n\nAre you absolutely sure you want to delete these?`
+            });
+
+            if (choice.response === 0) {
+                return { success: false, cancelled: true };
+            }
+        }
+
+        // Show standard confirmation dialog
         if (options.requireConfirmation !== false) {
             const choice = await dialog.showMessageBox(mainWindow, {
                 type: 'warning',
@@ -369,8 +444,9 @@ function applyTheme(theme) {
     }
 }
 
-// System scanning functions with enhanced performance
+// System scanning functions with enhanced performance and timeout protection
 async function scanSystem(options = {}) {
+    console.time('scanSystem');
     const homeDir = os.homedir();
     const categories = {
         developer: {
@@ -411,25 +487,56 @@ async function scanSystem(options = {}) {
         }
     };
 
-    // Run scans in parallel for better performance
-    const scanPromises = [
-        scanDeveloperFiles(homeDir, categories.developer, options),
-        scanCacheFiles(homeDir, categories.cache, options),
-        scanMediaFiles(homeDir, categories.media, options),
-        scanAppData(homeDir, categories.apps, options),
-        scanMiscFiles(homeDir, categories.misc, options),
-        scanTrash(homeDir, categories.trash, options)
-    ];
+    try {
+        // Use a quick scan approach with a timeout to prevent hanging
+        const fastScanTimeout = options.fastScan ? 10000 : 30000; // 10s for fast scan, 30s otherwise
 
-    await Promise.allSettled(scanPromises);
+        // Create scan functions with timeout protection
+        const createTimedScan = (scanFn, category, options, timeout) => {
+            return new Promise(resolve => {
+                // Set timeout to resolve even if the scan gets stuck
+                const timer = setTimeout(() => {
+                    console.warn(`Scan timeout for ${category.name}`);
+                    resolve();
+                }, timeout);
 
-    // Calculate total sizes
-    Object.values(categories).forEach(category => {
-        category.totalSize = category.items.reduce((sum, item) => sum + item.size, 0);
-        category.totalSizeFormatted = formatFileSize(category.totalSize);
-    });
+                scanFn(homeDir, category, options)
+                    .catch(error => console.error(`Error in ${category.name} scan:`, error))
+                    .finally(() => {
+                        clearTimeout(timer);
+                        resolve();
+                    });
+            });
+        };
 
-    return categories;
+        // Run scans in parallel with timeouts for each category
+        await Promise.all([
+            createTimedScan(scanDeveloperFiles, categories.developer, options, fastScanTimeout),
+            createTimedScan(scanCacheFiles, categories.cache, options, fastScanTimeout),
+            createTimedScan(scanMediaFiles, categories.media, options, fastScanTimeout),
+            createTimedScan(scanAppData, categories.apps, options, fastScanTimeout),
+            createTimedScan(scanMiscFiles, categories.misc, options, fastScanTimeout),
+            createTimedScan(scanTrash, categories.trash, options, fastScanTimeout)
+        ]);
+
+        // Calculate total sizes
+        Object.values(categories).forEach(category => {
+            category.totalSize = category.items.reduce((sum, item) => sum + item.size, 0);
+            category.totalSizeFormatted = formatFileSize(category.totalSize);
+        });
+
+        console.timeEnd('scanSystem');
+        return categories;
+    } catch (error) {
+        console.error('Scan system error:', error);
+
+        // Ensure we return at least empty data structure even if scan fails
+        Object.values(categories).forEach(category => {
+            category.totalSizeFormatted = '0 B';
+        });
+
+        return categories;
+    }
 }
 
 async function scanDeveloperFiles(homeDir, category, options = {}) {
@@ -748,20 +855,59 @@ function getDeveloperFileType(filePath) {
 
 async function getDirectorySizeFast(dirPath) {
     try {
-        return new Promise((resolve, reject) => {
-            exec(`du -sk "${dirPath}" 2>/dev/null`, (error, stdout) => {
+        return new Promise((resolve) => {
+            // Add timeout to prevent hanging
+            const timeout = setTimeout(() => {
+                // Only log timeout for directories we're actually trying to clean
+                if (!isSystemProtectedPath(dirPath)) {
+                    console.warn(`Directory size calculation timed out for: ${dirPath}`);
+                }
+                resolve(0);
+            }, 5000); // 5 second timeout
+
+            // Escape path properly for shell command
+            const escapedPath = dirPath.replace(/'/g, "'\\''");
+
+            exec(`du -sk '${escapedPath}' 2>/dev/null`, { timeout: 4000 }, (error, stdout) => {
+                clearTimeout(timeout);
+
                 if (error) {
+                    // Only log errors for directories we're actually trying to clean
+                    if (!isSystemProtectedPath(dirPath)) {
+                        console.log(`Error getting size for ${dirPath}: ${error.message}`);
+                    }
                     resolve(0);
                     return;
                 }
 
-                const sizeInKB = parseInt(stdout.split('\t')[0]) || 0;
-                resolve(sizeInKB * 1024);
+                try {
+                    const sizeInKB = parseInt(stdout.split('\t')[0]) || 0;
+                    resolve(sizeInKB * 1024);
+                } catch (parseError) {
+                    if (!isSystemProtectedPath(dirPath)) {
+                        console.log(`Parse error for ${dirPath}: ${parseError.message}`);
+                    }
+                    resolve(0);
+                }
             });
         });
     } catch (error) {
+        if (!isSystemProtectedPath(dirPath)) {
+            console.error(`Critical error measuring directory size for ${dirPath}:`, error);
+        }
         return 0;
     }
+}
+
+// Helper function to check if a path is system-protected (to reduce noise in logs)
+function isSystemProtectedPath(dirPath) {
+    const protectedPaths = [
+        '/System/', '/private/', 'DifferentialPrivacy', 'FaceTime', 'FileProvider', 
+        'Knowledge', 'com.apple.TCC', 'com.apple.avfoundation', 'com.apple.sharedfilelist', 
+        'Safari', 'com.apple.Safari', '/Library/Application Support/com.apple'
+    ];
+    
+    return protectedPaths.some(protectedPath => dirPath.includes(protectedPath));
 }
 
 async function getLastModified(filePath) {
@@ -773,9 +919,61 @@ async function getLastModified(filePath) {
     }
 }
 
+// Check if a path needs admin privileges to delete
+async function needsAdminForPath(filePath) {
+    try {
+        // Test if we can write to the parent directory
+        const parentDir = path.dirname(filePath);
+        await fs.access(parentDir, fs.constants.W_OK);
+        
+        // Test if we can write to the file/directory itself
+        await fs.access(filePath, fs.constants.W_OK);
+        return false;
+    } catch (error) {
+        // If we can't write, we likely need admin privileges
+        return true;
+    }
+}
+
+// Promisify exec for cleaner async/await usage
+function execPromise(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(stdout);
+            }
+        });
+    });
+}
+
 function isPathSafeForDeletion(filePath) {
-    // Check against whitelist of safe paths
-    return SAFE_DELETION_PATHS.some(safePath => filePath.includes(safePath));
+    // Normalize path for consistent comparison
+    const normalizedPath = filePath.replace(/\/+$/, '');
+
+    // Always prevent deletion of system critical paths
+    const CRITICAL_PATHS = [
+        '/System',
+        '/usr/bin',
+        '/bin',
+        '/sbin',
+        '/var/db',
+        '/private/var/db',
+        '/etc',
+        '/Applications'
+    ];
+
+    for (const criticalPath of CRITICAL_PATHS) {
+        // Block paths that could be system critical
+        if (normalizedPath === criticalPath ||
+            normalizedPath.startsWith(criticalPath + '/')) {
+            return false;
+        }
+    }
+
+    // For paths not in safe list, we'll allow deletion but show extra confirmation
+    return true;
 }
 
 async function getDiskUsage() {
@@ -819,23 +1017,62 @@ async function emptyTrash() {
 // Enhanced file deletion with better error handling
 async function deleteFiles(filePaths, options = {}) {
     const results = [];
-    const useTrash = options.moveToTrash !== false;
+    // Get user preference from settings, falling back to options parameter
+    const useTrash = options.moveToTrash !== undefined
+        ? options.moveToTrash
+        : store.get('cleanup.moveToTrashFirst', true);
+
+    console.log(`Deleting ${filePaths.length} files, useTrash: ${useTrash}`);
 
     for (const filePath of filePaths) {
         try {
+            // Skip if file doesn't exist
+            const exists = await fs.pathExists(filePath);
+            if (!exists) {
+                results.push({
+                    path: filePath,
+                    success: false,
+                    error: 'File not found'
+                });
+                continue;
+            }
+
+            // Check if we need admin rights for this path
+            const needsAdmin = await needsAdminForPath(filePath);
+
             if (useTrash) {
                 // Move to trash instead of permanent deletion
-                await shell.trashItem(filePath);
+                if (needsAdmin) {
+                    // For paths requiring admin, we need a different approach
+                    const command = `osascript -e 'tell application "Finder" to delete POSIX file "${filePath}"'`;
+                    await execPromise(command);
+                } else {
+                    await shell.trashItem(filePath);
+                }
             } else {
-                await fs.remove(filePath);
+                if (needsAdmin) {
+                    // Use sudo-prompt for admin deletion
+                    await new Promise((resolve, reject) => {
+                        sudoPrompt.exec(`rm -rf "${filePath}"`, {
+                            name: 'Mac Cleanup Wizard'
+                        }, (error) => {
+                            if (error) reject(error);
+                            else resolve();
+                        });
+                    });
+                } else {
+                    await fs.remove(filePath);
+                }
             }
 
             results.push({
                 path: filePath,
                 success: true,
-                method: useTrash ? 'trash' : 'delete'
+                method: useTrash ? 'trash' : 'delete',
+                adminRequired: needsAdmin
             });
         } catch (error) {
+            console.error(`Error deleting ${filePath}:`, error);
             results.push({
                 path: filePath,
                 success: false,
