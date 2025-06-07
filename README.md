@@ -59,6 +59,42 @@ chmod +x check-compatibility.sh && ./check-compatibility.sh
 
 ---
 
+## 📸 Screenshots
+
+<div align="center">
+  <img src="docs/screenshots/poster.png" alt="Mac Cleanup Wizard - Main Interface" width="800">
+  <p><em>Mac Cleanup Wizard - Clean Your Mac Like a Pro</em></p>
+</div>
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="docs/screenshots/Screenshot 2025-06-07 at 10.47.34 AM.png" alt="Main Dashboard" width="400">
+      <br><strong>Main Dashboard</strong>
+      <br><em>Organized file categories with sizes</em>
+    </td>
+    <td align="center">
+      <img src="docs/screenshots/Screenshot 2025-06-07 at 10.47.44 AM.png" alt="Developer Files" width="400">
+      <br><strong>Developer Files Scan</strong>
+      <br><em>Node.js, Python, Xcode cleanup</em>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="docs/screenshots/Screenshot 2025-06-07 at 10.47.51 AM.png" alt="Storage Analysis" width="400">
+      <br><strong>Storage Analysis</strong>
+      <br><em>Visual disk usage breakdown</em>
+    </td>
+    <td align="center">
+      <img src="docs/screenshots/Screenshot 2025-06-07 at 10.48.17 AM.png" alt="Cleanup Progress" width="400">
+      <br><strong>Cleanup Progress</strong>
+      <br><em>Real-time cleanup results</em>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## 🎯 Purpose
 
 Over time, macOS can get cluttered with:
