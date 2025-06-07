@@ -446,7 +446,8 @@ function applyTheme(theme) {
 
 // System scanning functions with enhanced performance and timeout protection
 async function scanSystem(options = {}) {
-    console.time('scanSystem');
+    const scanId = `scanSystem_${Date.now()}`;
+    console.time(scanId);
     const homeDir = os.homedir();
     const categories = {
         developer: {
@@ -525,10 +526,11 @@ async function scanSystem(options = {}) {
             category.totalSizeFormatted = formatFileSize(category.totalSize);
         });
 
-        console.timeEnd('scanSystem');
+        console.timeEnd(scanId);
         return categories;
     } catch (error) {
         console.error('Scan system error:', error);
+        console.timeEnd(scanId);
 
         // Ensure we return at least empty data structure even if scan fails
         Object.values(categories).forEach(category => {
