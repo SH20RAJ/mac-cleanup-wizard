@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troubleshooting - Mac Cleanup Wizard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --error-color: #f56565;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --bg-white: #ffffff;
+            --bg-light: #f7fafc;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--bg-light);
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 16px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .issue {
+            background: var(--bg-white);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .issue-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .issue-icon {
+            font-size: 1.5rem;
+        }
+
+        .solution {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .solution-title {
+            font-weight: 600;
+            color: var(--success-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .warning-box {
+            background: #fef5e7;
+            border: 1px solid var(--warning-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #744210;
+        }
+
+        .success-box {
+            background: #f0fff4;
+            border: 1px solid var(--success-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #22543d;
+        }
+
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .step-list li {
+            counter-increment: step-counter;
+            margin-bottom: 1rem;
+            padding-left: 2.5rem;
+            position: relative;
+        }
+
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: var(--primary-color);
+            color: white;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .quick-link {
+            background: var(--bg-white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text-dark);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        .quick-link:hover {
+            transform: translateY(-2px);
+            text-decoration: none;
+            color: var(--text-dark);
+        }
+
+        .quick-link i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+        
+        <div class="header">
+            <h1><i class="fas fa-tools"></i> Troubleshooting Guide</h1>
+            <p>Solutions for common Mac Cleanup Wizard installation and usage issues</p>
+        </div>
+
+        <!-- Gatekeeper Warning -->
+        <div class="issue">
+            <div class="issue-title">
+                <i class="fas fa-shield-alt issue-icon" style="color: var(--error-color);"></i>
+                "Apple could not verify Mac Cleanup Wizard is free of malware"
+            </div>
+            <p>This is the most common issue. It happens because Mac Cleanup Wizard is not code-signed with an Apple certificate (which costs $99/year).</p>
+            
+            <div class="solution">
+                <div class="solution-title">
+                    <i class="fas fa-check-circle"></i>
+                    Quick Fix (Terminal Method)
+                </div>
+                <ol class="step-list">
+                    <li>Open Terminal (⌘+Space, type "Terminal")</li>
+                    <li>Copy and paste this command:
+                        <div class="code-block">xattr -cr ~/Downloads/Mac\ Cleanup\ Wizard*.dmg</div>
+                    </li>
+                    <li>Press Enter</li>
+                    <li>Open the DMG file normally</li>
+                    <li><strong>Right-click</strong> the app and select "Open"</li>
+                </ol>
+            </div>
+
+            <div class="solution">
+                <div class="solution-title">
+                    <i class="fas fa-cog"></i>
+                    System Preferences Method
+                </div>
+                <ol class="step-list">
+                    <li>Try to open the app (it will be blocked)</li>
+                    <li>Go to System Preferences → Security & Privacy</li>
+                    <li>Look for a message about Mac Cleanup Wizard</li>
+                    <li>Click "Open Anyway"</li>
+                    <li>Confirm by clicking "Open"</li>
+                </ol>
+            </div>
+
+            <div class="solution">
+                <div class="solution-title">
+                    <i class="fas fa-magic"></i>
+                    Auto-Fix Script
+                </div>
+                <p>Download and run our automated fix script:</p>
+                <div class="code-block">curl -fsSL https://raw.githubusercontent.com/SH20RAJ/mac-cleanup-wizard/main/fix-gatekeeper.sh | bash</div>
+            </div>
+        </div>
+
+        <!-- App Damaged Error -->
+        <div class="issue">
+            <div class="issue-title">
+                <i class="fas fa-exclamation-triangle issue-icon" style="color: var(--warning-color);"></i>
+                "Mac Cleanup Wizard is damaged and can't be opened"
+            </div>
+            <p>This is another form of the Gatekeeper protection. Same solutions as above apply.</p>
+            
+            <div class="warning-box">
+                <strong>Important:</strong> Always right-click and select "Open" instead of double-clicking the app for the first launch.
+            </div>
+        </div>
+
+        <!-- Permission Issues -->
+        <div class="issue">
+            <div class="issue-title">
+                <i class="fas fa-lock issue-icon" style="color: var(--error-color);"></i>
+                Permission Denied / Access Issues
+            </div>
+            <p>Mac Cleanup Wizard needs Full Disk Access to scan your entire system.</p>
+            
+            <div class="solution">
+                <div class="solution-title">
+                    <i class="fas fa-unlock"></i>
+                    Grant Full Disk Access
+                </div>
+                <ol class="step-list">
+                    <li>Open System Preferences → Security & Privacy</li>
+                    <li>Click the "Privacy" tab</li>
+                    <li>Select "Full Disk Access" from the left sidebar</li>
+                    <li>Click the lock icon and enter your password</li>
+                    <li>Click the "+" button and add Mac Cleanup Wizard</li>
+                    <li>Restart the app</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Slow Scanning -->
+        <div class="issue">
+            <div class="issue-title">
+                <i class="fas fa-hourglass-half issue-icon" style="color: var(--warning-color);"></i>
+                App Stuck on Loading Screen / Slow Scanning
+            </div>
+            <p>Large file systems or permission issues can cause slow scans.</p>
+            
+            <div class="solution">
+                <div class="solution-title">
+                    <i class="fas fa-clock"></i>
+                    Solutions
+                </div>
+                <ul>
+                    <li>Wait up to 2-3 minutes for the initial scan</li>
+                    <li>Ensure Full Disk Access is granted (see above)</li>
+                    <li>Close other apps to free up system resources</li>
+                    <li>Try restarting the app</li>
+                    <li>Check Activity Monitor for high CPU usage</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Installation Issues -->
+        <div class="issue">
+            <div class="issue-title">
+                <i class="fas fa-download issue-icon" style="color: var(--primary-color);"></i>
+                Download or Installation Problems
+            </div>
+            
+            <div class="solution">
+                <div class="solution-title">
+                    <i class="fas fa-file-archive"></i>
+                    Try Different Download Format
+                </div>
+                <p>If DMG doesn't work, try the ZIP version:</p>
+                <ul>
+                    <li><strong>ARM64 (M1/M2/M3):</strong> <a href="https://github.com/SH20RAJ/mac-cleanup-wizard/releases/download/v1.0.0/Mac.Cleanup.Wizard-1.0.0-arm64-mac.zip">Download ZIP</a></li>
+                    <li><strong>Intel:</strong> <a href="https://github.com/SH20RAJ/mac-cleanup-wizard/releases/download/v1.0.0/Mac.Cleanup.Wizard-1.0.0-mac.zip">Download ZIP</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Why This Happens -->
+        <div class="issue">
+            <div class="issue-title">
+                <i class="fas fa-question-circle issue-icon" style="color: var(--primary-color);"></i>
+                Why Does This Happen?
+            </div>
+            <div class="success-box">
+                <p><strong>Mac Cleanup Wizard is completely safe!</strong> Here's why you see these warnings:</p>
+                <ul>
+                    <li>Apple requires developers to pay $99/year for code signing</li>
+                    <li>As a free, open-source project, we don't have this certificate</li>
+                    <li>You can review our complete source code on GitHub</li>
+                    <li>Thousands of users have safely used the app</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+            <a href="https://github.com/SH20RAJ/mac-cleanup-wizard/issues" class="quick-link">
+                <i class="fab fa-github"></i>
+                <h3>Report a Bug</h3>
+                <p>Found an issue? Let us know on GitHub</p>
+            </a>
+            
+            <a href="https://github.com/SH20RAJ/mac-cleanup-wizard" class="quick-link">
+                <i class="fas fa-code"></i>
+                <h3>View Source Code</h3>
+                <p>See exactly what the app does</p>
+            </a>
+            
+            <a href="support.html" class="quick-link">
+                <i class="fas fa-life-ring"></i>
+                <h3>More Support</h3>
+                <p>Additional help and FAQ</p>
+            </a>
+            
+            <a href="mailto:sh20raj@gmail.com" class="quick-link">
+                <i class="fas fa-envelope"></i>
+                <h3>Contact Support</h3>
+                <p>Get direct help via email</p>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Copy code functionality
+        document.querySelectorAll('.code-block').forEach(block => {
+            block.style.cursor = 'pointer';
+            block.title = 'Click to copy';
+            block.addEventListener('click', () => {
+                navigator.clipboard.writeText(block.textContent).then(() => {
+                    const originalText = block.textContent;
+                    block.textContent = 'Copied! ✅';
+                    setTimeout(() => {
+                        block.textContent = originalText;
+                    }, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,5 +1,12 @@
 # 🧹 Mac Cleanup Wizard
 
+[![macOS](https://img.shields.io/badge/macOS-10.15+-blue?logo=apple)](https://www.apple.com/macos/)
+[![Electron](https://img.shields.io/badge/Electron-25.0+-9feaf9?logo=electron)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-18.2+-61dafb?logo=react)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Security](https://img.shields.io/badge/Security-Open%20Source-brightgreen)](https://github.com/SH20RAJ/mac-cleanup-wizard)
+[![Downloads](https://img.shields.io/github/downloads/sh20raj/mac-cleanup-wizard/total)](https://github.com/SH20RAJ/mac-cleanup-wizard/releases)
+
 **Mac Cleanup Wizard** is a free and open-source desktop app that helps you identify and safely delete unwanted files, caches, logs, developer junk, and system bloat from your macOS system — all with an organized, intuitive UI.
 
 ## 🚨 macOS Security Warning
@@ -21,6 +28,34 @@ Then **right-click the app → "Open"** (don't double-click!)
 - **The app is completely safe** - you can review the [source code](https://github.com/SH20RAJ/mac-cleanup-wizard)
 
 📖 **Still having issues?** Check our [complete installation guide](INSTALLATION.md) with multiple fix methods.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Check Compatibility
+```bash
+# Download and run compatibility check
+curl -O https://raw.githubusercontent.com/SH20RAJ/mac-cleanup-wizard/main/check-compatibility.sh
+chmod +x check-compatibility.sh && ./check-compatibility.sh
+```
+
+### 2. Download & Install
+1. **Download** the appropriate version:
+   - **Apple Silicon (M1/M2/M3)**: `Mac Cleanup Wizard-1.0.0-arm64.dmg`
+   - **Intel Mac**: `Mac Cleanup Wizard-1.0.0.dmg`
+
+2. **Fix Security Warning** (if needed):
+   ```bash
+   xattr -cr ~/Downloads/Mac\ Cleanup\ Wizard*.dmg
+   ```
+
+3. **Install**: Double-click the DMG and drag to Applications
+
+4. **First Launch**: Right-click the app → "Open" (don't double-click!)
+
+### 3. Start Cleaning
+🎉 **You're ready!** The app will guide you through identifying and safely removing unnecessary files.
 
 ---
 
