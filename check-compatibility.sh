@@ -36,10 +36,12 @@ else
 fi
 
 # Check available disk space
-available_space=$(df -h . | awk 'NR==2 {print $4}' | sed 's/G//')
-echo "📍 Available disk space: ${available_space}GB"
+available_space=$(df -h . | awk 'NR==2 {print $4}' | sed 's/[^0-9.]//g')
+available_space_raw=$(df . | awk 'NR==2 {print $4}')
+available_gb=$((available_space_raw / 1048576))
+echo "📍 Available disk space: ${available_gb}GB"
 
-if (( $(echo "$available_space > 1" | bc -l) )); then
+if [[ $available_gb -gt 1 ]]; then
     echo "✅ Sufficient disk space available"
 else
     echo "⚠️  Low disk space detected - consider freeing up space first"
