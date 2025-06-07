@@ -2,6 +2,16 @@
 
 **Mac Cleanup Wizard** is a free and open-source desktop app that helps you identify and safely delete unwanted files, caches, logs, developer junk, and system bloat from your macOS system — all with an organized, intuitive UI.
 
+## 🚨 Installation Note
+
+**Getting "App is damaged" error?** This is normal for unsigned apps. **Quick fix**:
+
+```bash
+xattr -cr ~/Downloads/Mac\ Cleanup\ Wizard*.dmg
+```
+
+Then **right-click → Open** the app. [📖 Full installation guide](INSTALLATION.md)
+
 ## 🎯 Purpose
 
 Over time, macOS can get cluttered with:
@@ -53,6 +63,38 @@ This app provides an **organized and visual approach** to clean these intelligen
 - **Backend / Scripts:** Node.js (with native modules for file ops)
 - **Permissions:** macOS elevated shell access (via `sudo`)
 - **AI Assistant (optional):** OpenAI GPT-4 or local LLM for suggestions
+
+---
+
+## 📦 Download & Installation
+
+### 🎯 Quick Download
+
+**Latest Release:** [v1.0.0](https://github.com/SH20RAJ/mac-cleanup-wizard/releases/tag/v1.0.0)
+
+| Architecture | DMG Installer | ZIP Archive |
+|-------------|---------------|-------------|
+| **Apple Silicon** (M1/M2/M3) | [Download DMG](https://github.com/SH20RAJ/mac-cleanup-wizard/releases/download/v1.0.0/Mac.Cleanup.Wizard-1.0.0-arm64.dmg) | [Download ZIP](https://github.com/SH20RAJ/mac-cleanup-wizard/releases/download/v1.0.0/Mac.Cleanup.Wizard-1.0.0-arm64-mac.zip) |
+| **Intel** (x64) | [Download DMG](https://github.com/SH20RAJ/mac-cleanup-wizard/releases/download/v1.0.0/Mac.Cleanup.Wizard-1.0.0.dmg) | [Download ZIP](https://github.com/SH20RAJ/mac-cleanup-wizard/releases/download/v1.0.0/Mac.Cleanup.Wizard-1.0.0-mac.zip) |
+
+### 🛠️ Installation Steps
+
+1. **Download** the appropriate version for your Mac
+2. **Fix Gatekeeper** (required for unsigned apps):
+   ```bash
+   xattr -cr ~/Downloads/Mac\ Cleanup\ Wizard*.dmg
+   ```
+3. **Install**: Open DMG and drag to Applications
+4. **First Launch**: Right-click app → "Open" (important!)
+
+### 🔧 Auto-Fix Script
+
+Download and run our fix script:
+```bash
+curl -fsSL https://raw.githubusercontent.com/SH20RAJ/mac-cleanup-wizard/main/fix-gatekeeper.sh | bash
+```
+
+📖 **Having issues?** Check the [complete installation guide](INSTALLATION.md).
 
 ---
 
