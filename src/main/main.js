@@ -935,19 +935,6 @@ async function needsAdminForPath(filePath) {
     }
 }
 
-// Promisify exec for cleaner async/await usage
-function execPromise(command) {
-    return new Promise((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(stdout);
-            }
-        });
-    });
-}
-
 function isPathSafeForDeletion(filePath) {
     // Normalize path for consistent comparison
     const normalizedPath = filePath.replace(/\/+$/, '');
