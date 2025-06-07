@@ -1,10 +1,10 @@
 # Installation Guide for Mac Cleanup Wizard
 
-## 🚨 "App is damaged" Error Fix
+## 🚨 Gatekeeper Security Warning
 
-If you see the error **"Mac Cleanup Wizard is damaged and can't be opened"**, this is a common macOS security feature called **Gatekeeper** protecting you from unsigned applications.
+If you see **"Apple could not verify Mac Cleanup Wizard is free of malware"** or **"Mac Cleanup Wizard is damaged and can't be opened"**, this is a normal macOS security feature called **Gatekeeper** that protects you from unsigned applications.
 
-### ✅ **Quick Fix (Method 1 - Recommended)**
+### ⚡ **Quick Fix (Method 1 - Recommended)**
 
 1. **Download** the app from [GitHub Releases](https://github.com/SH20RAJ/mac-cleanup-wizard/releases/tag/v1.0.0)
 2. **Don't double-click** the downloaded file yet
@@ -16,8 +16,8 @@ xattr -cr ~/Downloads/Mac\ Cleanup\ Wizard*.dmg
 ```
 
 5. **Now open** the DMG file normally
-6. **Drag** the app to Applications folder
-7. **Right-click** on the app in Applications and select **"Open"**
+6. **Drag** the app to Applications folder  
+7. **⚠️ IMPORTANT**: **Right-click** on the app in Applications and select **"Open"** (don't double-click!)
 8. **Click "Open"** when macOS asks for confirmation
 
 ### 🛡️ **Alternative Fix (Method 2)**

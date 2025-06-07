@@ -2,19 +2,32 @@
 
 **Mac Cleanup Wizard** is a free and open-source desktop app that helps you identify and safely delete unwanted files, caches, logs, developer junk, and system bloat from your macOS system — all with an organized, intuitive UI.
 
-## 🚨 Installation Note
+## 🚨 macOS Security Warning
 
-**Getting "App is damaged" error?** This is normal for unsigned apps. **Quick fix**:
+**Seeing "Apple could not verify Mac Cleanup Wizard is free of malware"?** This is normal for unsigned open-source apps.
+
+### ⚡ Instant Fix
 
 ```bash
 xattr -cr ~/Downloads/Mac\ Cleanup\ Wizard*.dmg
 ```
 
-Then **right-click → Open** the app. [📖 Full installation guide](INSTALLATION.md)
+Then **right-click the app → "Open"** (don't double-click!)
+
+### 🛡️ Why This Happens
+
+- Apple requires a $99/year developer certificate to avoid this warning
+- As a free open-source project, we don't have Apple code signing
+- **The app is completely safe** - you can review the [source code](https://github.com/SH20RAJ/mac-cleanup-wizard)
+
+📖 **Still having issues?** Check our [complete installation guide](INSTALLATION.md) with multiple fix methods.
+
+---
 
 ## 🎯 Purpose
 
 Over time, macOS can get cluttered with:
+
 - `node_modules/`
 - Python virtual environments
 - Xcode derived data
@@ -23,6 +36,7 @@ Over time, macOS can get cluttered with:
 - Chrome service workers
 - Docker containers/images
 - Unused apps and large media files
+
 ...and more!
 
 This app provides an **organized and visual approach** to clean these intelligently, with safety checks, size previews, and one-click deletion.
