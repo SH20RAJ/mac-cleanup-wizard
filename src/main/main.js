@@ -256,7 +256,7 @@ ipcMain.handle('delete-files', async (event, filePaths, options = {}) => {
 
         // Validate all paths are safe for deletion
         const criticalPaths = filePaths.filter(filePath => !isPathSafeForDeletion(filePath));
-        
+
         // Show extra confirmation for critical system paths
         if (criticalPaths.length > 0) {
             const choice = await dialog.showMessageBox(mainWindow, {
@@ -278,7 +278,7 @@ ipcMain.handle('delete-files', async (event, filePaths, options = {}) => {
             const normalizedPath = filePath.replace(/\/+$/, '');
             return !SAFE_DELETION_PATHS.some(safePath => normalizedPath.includes(safePath));
         });
-        
+
         // Show extra confirmation for paths not in safe list
         if (potentiallyUnsafePaths.length > 0 && options.requireConfirmation !== false) {
             const choice = await dialog.showMessageBox(mainWindow, {
@@ -902,11 +902,11 @@ async function getDirectorySizeFast(dirPath) {
 // Helper function to check if a path is system-protected (to reduce noise in logs)
 function isSystemProtectedPath(dirPath) {
     const protectedPaths = [
-        '/System/', '/private/', 'DifferentialPrivacy', 'FaceTime', 'FileProvider', 
-        'Knowledge', 'com.apple.TCC', 'com.apple.avfoundation', 'com.apple.sharedfilelist', 
+        '/System/', '/private/', 'DifferentialPrivacy', 'FaceTime', 'FileProvider',
+        'Knowledge', 'com.apple.TCC', 'com.apple.avfoundation', 'com.apple.sharedfilelist',
         'Safari', 'com.apple.Safari', '/Library/Application Support/com.apple'
     ];
-    
+
     return protectedPaths.some(protectedPath => dirPath.includes(protectedPath));
 }
 
@@ -925,7 +925,7 @@ async function needsAdminForPath(filePath) {
         // Test if we can write to the parent directory
         const parentDir = path.dirname(filePath);
         await fs.access(parentDir, fs.constants.W_OK);
-        
+
         // Test if we can write to the file/directory itself
         await fs.access(filePath, fs.constants.W_OK);
         return false;

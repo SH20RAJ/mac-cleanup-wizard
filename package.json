@@ -4,15 +4,15 @@
     "description": "A free and open-source desktop app that helps you identify and safely delete unwanted files from your macOS system",
     "main": "src/main/main.js",
     "homepage": "./",
-  "author": {
-    "name": "Shaswat Raj",
-    "email": "info@maccleanupwizard.com",
-    "url": "https://x.com/sh20raj"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sh20raj/mac-cleanup-wizard.git"
-  },
+    "author": {
+        "name": "Shaswat Raj",
+        "email": "info@maccleanupwizard.com",
+        "url": "https://x.com/sh20raj"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/sh20raj/mac-cleanup-wizard.git"
+    },
     "scripts": {
         "dev": "concurrently \"npm run electron-dev\" \"npm run react-dev\"",
         "react-dev": "react-scripts start",

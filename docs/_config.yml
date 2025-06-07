@@ -1,0 +1,29 @@
+theme: minima
+title: Mac Cleanup Wizard
+description: The ultimate macOS cleanup tool. Remove junk files, clear caches, free up storage space, and optimize your Mac's performance.
+url: "https://sh20raj.github.io/mac-cleanup-wizard"
+baseurl: ""
+
+author:
+  name: Shaswat Raj
+  email: sh20raj@gmail.com
+  twitter: sh20raj
+
+github:
+  repository_url: https://github.com/sh20raj/mac-cleanup-wizard
+  repository_name: mac-cleanup-wizard
+  owner_name: sh20raj
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/bundle/
+  - vendor/cache/
+  - vendor/gems/
+  - vendor/ruby/

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mac Cleanup Wizard - Support & FAQ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #f7fafc;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        h2 {
+            color: #2d3748;
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            color: #667eea;
+            text-decoration: none;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .faq-item {
+            margin-bottom: 2rem;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .faq-question {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+        
+        .faq-answer {
+            color: #4a5568;
+        }
+        
+        .support-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+        
+        .support-box h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .support-links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .support-link {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+        
+        .support-link:hover {
+            background: rgba(255, 255, 255, 0.3);
+            text-decoration: none;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Home</a>
+        
+        <h1>Support & FAQ</h1>
+        
+        <div class="support-box">
+            <h3>Need Help?</h3>
+            <p>Get support through these channels:</p>
+            <div class="support-links">
+                <a href="https://github.com/sh20raj/mac-cleanup-wizard/issues" class="support-link">GitHub Issues</a>
+                <a href="https://x.com/sh20raj" class="support-link">Twitter Support</a>
+                <a href="mailto:sh20raj@gmail.com" class="support-link">Email Support</a>
+            </div>
+        </div>
+        
+        <h2>Frequently Asked Questions</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question">Is Mac Cleanup Wizard safe to use?</div>
+            <div class="faq-answer">
+                Yes, Mac Cleanup Wizard is designed with safety as a top priority. It includes multiple safety checks, confirmation dialogs, and moves files to trash by default instead of permanently deleting them. The app is also open source, so you can review the code yourself.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">What types of files does it clean?</div>
+            <div class="faq-answer">
+                The app can clean developer files (Node.js modules, Python environments, Xcode data), cache files (browser caches, system caches), temp files, large media files, old downloads, and application support data. It's particularly effective for developers who accumulate lots of build artifacts.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">Does it collect any personal data?</div>
+            <div class="faq-answer">
+                No, Mac Cleanup Wizard does not collect, store, or transmit any personal data. It works entirely offline and all operations are performed locally on your Mac. No analytics, tracking, or network connections are made.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">What macOS versions are supported?</div>
+            <div class="faq-answer">
+                Mac Cleanup Wizard requires macOS 10.14 (Mojave) or later. It supports both Intel and Apple Silicon Macs, with separate downloads available for each architecture.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">How much space can I expect to free up?</div>
+            <div class="faq-answer">
+                This varies greatly depending on your usage patterns, but users typically recover anywhere from 10GB to 100GB+ of space. Developer machines with lots of Node.js projects, Xcode builds, and Docker images tend to have the most potential for cleanup.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">Can I recover files after cleaning?</div>
+            <div class="faq-answer">
+                By default, files are moved to the Trash, so you can recover them from there if needed. You can change this behavior in settings to permanently delete files if you prefer, but we recommend keeping the trash option enabled for safety.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">Why does the app request Full Disk Access?</div>
+            <div class="faq-answer">
+                Full Disk Access is needed to scan system directories, caches, and protected folders that contain junk files. This permission allows the app to provide a comprehensive cleanup. The permission is only used for scanning and cleaning - no data is transmitted anywhere.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">How often should I run the cleanup?</div>
+            <div class="faq-answer">
+                For most users, running the cleanup monthly is sufficient. Heavy developers might want to run it weekly or bi-weekly. The app includes a setting to automatically scan on startup if you prefer to check regularly.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">Is there a command-line version?</div>
+            <div class="faq-answer">
+                Currently, Mac Cleanup Wizard is a GUI application only. However, since it's open source, contributors are welcome to create command-line tools or scripts based on the same cleaning logic.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">Can I contribute to the project?</div>
+            <div class="faq-answer">
+                Absolutely! Mac Cleanup Wizard is open source and welcomes contributions. You can contribute code, report bugs, suggest features, or help with documentation on the <a href="https://github.com/sh20raj/mac-cleanup-wizard" style="color: #667eea;">GitHub repository</a>.
+            </div>
+        </div>
+        
+        <h2>Troubleshooting</h2>
+        
+        <div class="faq-item">
+            <div class="faq-question">The app gets stuck on the loading screen</div>
+            <div class="faq-answer">
+                This can happen if the initial scan is taking a long time due to large directories or permission issues. The app now includes timeout mechanisms and will show results after 15 seconds even if scanning isn't complete. Try granting Full Disk Access in System Preferences > Security & Privacy.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">I'm getting permission errors</div>
+            <div class="faq-answer">
+                Go to System Preferences > Security & Privacy > Privacy > Full Disk Access and make sure Mac Cleanup Wizard is checked. You may need to remove and re-add the app to the list after updates.
+            </div>
+        </div>
+        
+        <div class="faq-item">
+            <div class="faq-question">The app won't open (damaged/unidentified developer)</div>
+            <div class="faq-answer">
+                This is a common macOS security message for unsigned apps. Right-click the app and select "Open", then click "Open" in the dialog. Alternatively, you can go to System Preferences > Security & Privacy and click "Open Anyway" after the first attempt to run the app.
+            </div>
+        </div>
+        
+        <h2>Still Need Help?</h2>
+        <p>If you can't find the answer to your question here, please don't hesitate to reach out:</p>
+        <ul>
+            <li><strong>GitHub Issues:</strong> <a href="https://github.com/sh20raj/mac-cleanup-wizard/issues">Report bugs or request features</a></li>
+            <li><strong>Email:</strong> sh20raj@gmail.com</li>
+            <li><strong>Twitter:</strong> <a href="https://x.com/sh20raj">@sh20raj</a></li>
+        </ul>
+    </div>
+</body>
+</html>
