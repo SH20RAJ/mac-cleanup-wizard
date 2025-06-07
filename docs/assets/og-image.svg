@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- App Icon -->
+  <rect x="100" y="150" width="120" height="120" rx="20" fill="white" opacity="0.2"/>
+  <rect x="110" y="160" width="100" height="100" rx="15" fill="white"/>
+  <path d="M140 200h40v6H140v-6zm0 12h30v6h-30v-6zm0 12h20v6h-20v-6z" fill="#667eea"/>
+  <circle cx="190" cy="220" r="8" fill="#667eea" opacity="0.8"/>
+  
+  <!-- Title -->
+  <text x="260" y="220" fill="white" font-family="Inter, sans-serif" font-size="64" font-weight="700">Mac Cleanup Wizard</text>
+  <text x="260" y="270" fill="white" font-family="Inter, sans-serif" font-size="32" font-weight="400" opacity="0.9">Clean Your Mac Like a Pro</text>
+  
+  <!-- Features -->
+  <text x="260" y="320" fill="white" font-family="Inter, sans-serif" font-size="20" opacity="0.8">✨ Smart file detection</text>
+  <text x="260" y="350" fill="white" font-family="Inter, sans-serif" font-size="20" opacity="0.8">🛡️ Safe deletion with confirmations</text>
+  <text x="260" y="380" fill="white" font-family="Inter, sans-serif" font-size="20" opacity="0.8">⚡ Lightning fast scanning</text>
+  <text x="260" y="410" fill="white" font-family="Inter, sans-serif" font-size="20" opacity="0.8">📊 Visual storage analysis</text>
+  
+  <!-- Stats -->
+  <rect x="800" y="150" width="300" height="250" rx="20" fill="white" opacity="0.1"/>
+  <text x="950" y="200" text-anchor="middle" fill="white" font-family="Inter, sans-serif" font-size="48" font-weight="700">50GB+</text>
+  <text x="950" y="230" text-anchor="middle" fill="white" font-family="Inter, sans-serif" font-size="18" opacity="0.8">Average Space Recovered</text>
+  
+  <text x="950" y="280" text-anchor="middle" fill="white" font-family="Inter, sans-serif" font-size="48" font-weight="700">100%</text>
+  <text x="950" y="310" text-anchor="middle" fill="white" font-family="Inter, sans-serif" font-size="18" opacity="0.8">Free & Open Source</text>
+  
+  <!-- Footer -->
+  <text x="600" y="580" text-anchor="middle" fill="white" font-family="Inter, sans-serif" font-size="18" opacity="0.7">Available for macOS • github.com/sh20raj/mac-cleanup-wizard</text>
+</svg>
